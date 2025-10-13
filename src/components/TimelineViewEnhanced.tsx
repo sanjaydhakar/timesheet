@@ -20,7 +20,7 @@ interface DragSelection {
 }
 
 const TimelineViewEnhanced: React.FC = () => {
-  const { developers, projects, allocations, addAllocation, addDeveloper, addProject } = useData();
+  const { developers, projects, allocations, addAllocation, updateAllocation, deleteAllocation, addDeveloper, addProject } = useData();
   const [viewMode, setViewMode] = useState<'resource' | 'project'>('resource');
   const [timeRange, setTimeRange] = useState<'3months' | '6months' | '12months'>('6months');
   const [startDate, setStartDate] = useState(() => {
@@ -32,6 +32,8 @@ const TimelineViewEnhanced: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddData, setQuickAddData] = useState<any>(null);
+  const [showEditAllocation, setShowEditAllocation] = useState(false);
+  const [editingAllocation, setEditingAllocation] = useState<any>(null);
   const [showDeveloperModal, setShowDeveloperModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [savedQuickAddData, setSavedQuickAddData] = useState<any>(null);
@@ -380,6 +382,52 @@ const TimelineViewEnhanced: React.FC = () => {
     setStartDate(addDays(getTodayStart(), -30));
   };
 
+  const handleEditAllocation = (allocation: any) => {
+    setEditingAllocation(allocation);
+    setShowEditAllocation(true);
+  };
+
+  const handleUpdateAllocation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAllocation) return;
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
+    try {
+      const updatedAllocation = {
+        developerId: editingAllocation.developerId,
+        projectId: editingAllocation.projectId,
+        bandwidth: Number(formData.get('bandwidth')),
+        startDate: new Date(formData.get('startDate') as string),
+        endDate: new Date(formData.get('endDate') as string),
+        notes: formData.get('notes') as string || '',
+      };
+
+      await updateAllocation(editingAllocation.id, updatedAllocation);
+      setShowEditAllocation(false);
+      setEditingAllocation(null);
+    } catch (error) {
+      console.error('Error updating allocation:', error);
+      alert('Failed to update allocation');
+    }
+  };
+
+  const handleDeleteAllocation = async () => {
+    if (!editingAllocation) return;
+    
+    if (confirm('Are you sure you want to delete this allocation?')) {
+      try {
+        await deleteAllocation(editingAllocation.id);
+        setShowEditAllocation(false);
+        setEditingAllocation(null);
+      } catch (error) {
+        console.error('Error deleting allocation:', error);
+        alert('Failed to delete allocation');
+      }
+    }
+  };
+
   const todayPosition = today >= startDate && today <= endDate ? calculatePosition(today) : null;
 
   return (
@@ -609,11 +657,11 @@ const TimelineViewEnhanced: React.FC = () => {
                         )}
 
                         {/* Allocation bars */}
-                        <div className="absolute inset-0 p-1 pointer-events-none">
+                        <div className="absolute inset-0 p-1 pointer-events-auto">
                           {timelineBars.map((bar, barIndex) => (
                             <div
                               key={`${bar.allocation.id}-${barIndex}`}
-                              className={`absolute ${projectColors[bar.project.id]} rounded shadow-sm group`}
+                              className={`absolute ${projectColors[bar.project.id]} rounded shadow-sm group cursor-pointer hover:opacity-100 hover:shadow-lg transition-all`}
                               style={{
                                 left: `${bar.startPos}%`,
                                 width: `${bar.width}%`,
@@ -621,7 +669,11 @@ const TimelineViewEnhanced: React.FC = () => {
                                 height: '20px',
                                 opacity: 0.9,
                               }}
-                              title={`${bar.project.name} - ${bar.allocation.bandwidth}%`}
+                              title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAllocation(bar.allocation);
+                              }}
                             >
                               <div className="h-full flex items-center px-2 text-white text-xs font-medium truncate">
                                 <span className="truncate">{bar.project.name}</span>
@@ -701,11 +753,11 @@ const TimelineViewEnhanced: React.FC = () => {
                         )}
 
                         {/* Allocation bars (showing developers) */}
-                        <div className="absolute inset-0 p-1 pointer-events-none">
+                        <div className="absolute inset-0 p-1 pointer-events-auto">
                           {timelineBars.map((bar, barIndex) => (
                             <div
                               key={`${bar.allocation.id}-${barIndex}`}
-                              className={`absolute ${projectColors[project.id]} rounded shadow-sm group`}
+                              className={`absolute ${projectColors[project.id]} rounded shadow-sm group cursor-pointer hover:opacity-100 hover:shadow-lg transition-all`}
                               style={{
                                 left: `${bar.startPos}%`,
                                 width: `${bar.width}%`,
@@ -713,7 +765,11 @@ const TimelineViewEnhanced: React.FC = () => {
                                 height: '20px',
                                 opacity: 0.9,
                               }}
-                              title={`${bar.project.name} - ${bar.allocation.bandwidth}%`}
+                              title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAllocation(bar.allocation);
+                              }}
                             >
                               <div className="h-full flex items-center px-2 text-white text-xs font-medium truncate">
                                 <span className="truncate">{bar.project.name}</span>
@@ -881,6 +937,133 @@ const TimelineViewEnhanced: React.FC = () => {
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                 >
                   Add Allocation
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Allocation Modal */}
+      {showEditAllocation && editingAllocation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Edit Allocation</h3>
+              <button
+                onClick={() => {
+                  setShowEditAllocation(false);
+                  setEditingAllocation(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateAllocation} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Developer</label>
+                <input
+                  type="text"
+                  value={developers.find(d => d.id === editingAllocation.developerId)?.name || ''}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                <input
+                  type="text"
+                  value={projects.find(p => p.id === editingAllocation.projectId)?.name || ''}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Bandwidth</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="bandwidth"
+                      value="50"
+                      defaultChecked={editingAllocation.bandwidth === 50}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">50% (Half-time)</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="bandwidth"
+                      value="100"
+                      defaultChecked={editingAllocation.bandwidth === 100}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm">100% (Full-time)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    required
+                    defaultValue={formatDateInput(editingAllocation.startDate)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    required
+                    defaultValue={formatDateInput(editingAllocation.endDate)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  defaultValue={editingAllocation.notes || ''}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  placeholder="Add any notes..."
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleDeleteAllocation}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditAllocation(false);
+                    setEditingAllocation(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>
