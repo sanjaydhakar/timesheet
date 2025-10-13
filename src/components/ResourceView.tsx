@@ -1,22 +1,30 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
-import { DeveloperWithAllocations } from '../types';
+import { DeveloperWithAllocations, Developer } from '../types';
 import { calculateCurrentBandwidth } from '../utils/calculations';
 import { formatDate, getTodayStart, getNextAvailableDate } from '../utils/dateUtils';
-import { User, Calendar, TrendingUp, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, Search } from 'lucide-react';
+import { User, Calendar, TrendingUp, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, Search, X, Trash2, Upload } from 'lucide-react';
 import { isAfter, isBefore } from 'date-fns';
+import BulkAddDevelopers from './BulkAddDevelopers';
 
 interface ResourceViewProps {
-  onEdit?: (developerId: string) => void;
   onAddAllocation?: (developerId: string) => void;
 }
 
-const ResourceView: React.FC<ResourceViewProps> = ({ onEdit, onAddAllocation }) => {
-  const { developers, projects, allocations } = useData();
+const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
+  const { developers, projects, allocations, addDeveloper, updateDeveloper, deleteDeveloper } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'name' | 'bandwidth' | 'availability'>('bandwidth');
+  const [showModal, setShowModal] = useState(false);
+  const [editingDeveloper, setEditingDeveloper] = useState<Developer | null>(null);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [developerForm, setDeveloperForm] = useState({
+    name: '',
+    email: '',
+    skills: '',
+  });
 
   const developersWithAllocations: DeveloperWithAllocations[] = useMemo(() => {
     const today = getTodayStart();
@@ -91,6 +99,54 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onEdit, onAddAllocation }) 
     setExpandedRows(newExpanded);
   };
 
+  const openAddModal = () => {
+    setEditingDeveloper(null);
+    setDeveloperForm({ name: '', email: '', skills: '' });
+    setShowModal(true);
+  };
+
+  const openEditModal = (developer: Developer) => {
+    setEditingDeveloper(developer);
+    setDeveloperForm({
+      name: developer.name,
+      email: developer.email,
+      skills: developer.skills.join(', '),
+    });
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingDeveloper(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const skills = developerForm.skills.split(',').map(s => s.trim()).filter(s => s);
+    
+    if (editingDeveloper) {
+      updateDeveloper(editingDeveloper.id, {
+        name: developerForm.name,
+        email: developerForm.email,
+        skills,
+      });
+    } else {
+      addDeveloper({
+        id: `dev${Date.now()}`,
+        name: developerForm.name,
+        email: developerForm.email,
+        skills,
+      });
+    }
+    closeModal();
+  };
+
+  const handleDelete = (developer: Developer) => {
+    if (window.confirm(`Are you sure you want to delete ${developer.name}? This will also remove all their allocations.`)) {
+      deleteDeveloper(developer.id);
+    }
+  };
+
   const today = getTodayStart();
 
   const stats = useMemo(() => {
@@ -154,6 +210,20 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onEdit, onAddAllocation }) 
             <option value="availability">Sort by Availability</option>
             <option value="name">Sort by Name</option>
           </select>
+          <button
+            onClick={() => setShowBulkImport(true)}
+            className="px-4 py-2 text-sm border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Bulk Import
+          </button>
+          <button
+            onClick={openAddModal}
+            className="px-4 py-2 text-sm bg-gradient-primary text-white hover:shadow-lg rounded-lg transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Developer
+          </button>
         </div>
       </div>
 
@@ -259,7 +329,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onEdit, onAddAllocation }) 
                             <Eye className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => onEdit?.(developer.id)}
+                            onClick={() => openEditModal(developer)}
                             className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
                             title="Edit developer"
                           >
@@ -267,10 +337,17 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onEdit, onAddAllocation }) 
                           </button>
                           <button 
                             onClick={() => onAddAllocation?.(developer.id)}
-                            className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                             title="Add allocation"
                           >
                             <Plus className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(developer)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete developer"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -363,6 +440,105 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onEdit, onAddAllocation }) 
           </div>
         )}
       </div>
+
+      {/* Developer Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <User className="w-6 h-6 text-primary-600" />
+                {editingDeveloper ? 'Edit Developer' : 'Add Developer'}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={developerForm.name}
+                  onChange={(e) => setDeveloperForm({ ...developerForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={developerForm.email}
+                  onChange={(e) => setDeveloperForm({ ...developerForm, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="john@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Skills (comma-separated) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={developerForm.skills}
+                  onChange={(e) => setDeveloperForm({ ...developerForm, skills: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="React, TypeScript, Node.js"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-primary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all"
+                >
+                  {editingDeveloper ? 'Update Developer' : 'Add Developer'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal */}
+      {showBulkImport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Upload className="w-6 h-6 text-primary-600" />
+                Bulk Import Developers
+              </h3>
+              <button
+                onClick={() => setShowBulkImport(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <BulkAddDevelopers onClose={() => setShowBulkImport(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

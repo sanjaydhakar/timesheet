@@ -1,21 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
-import { ProjectWithAllocations } from '../types';
-import { formatDate, getTodayStart } from '../utils/dateUtils';
-import { Briefcase, Users, Calendar, AlertCircle, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, TrendingUp } from 'lucide-react';
+import { ProjectWithAllocations, Project } from '../types';
+import { formatDate, formatDateInput, getTodayStart } from '../utils/dateUtils';
+import { Briefcase, Users, Calendar, AlertCircle, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, TrendingUp, X, Trash2 } from 'lucide-react';
 import { isAfter } from 'date-fns';
 
 interface ProjectViewProps {
-  onEdit?: (projectId: string) => void;
   onAddAllocation?: (projectId: string) => void;
 }
 
-const ProjectView: React.FC<ProjectViewProps> = ({ onEdit, onAddAllocation }) => {
-  const { projects, developers, allocations } = useData();
+const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
+  const { projects, developers, allocations, addProject, updateProject, deleteProject } = useData();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'name' | 'priority' | 'resources'>('priority');
+  const [showModal, setShowModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [projectForm, setProjectForm] = useState({
+    name: '',
+    description: '',
+    requiredSkills: '',
+    priority: 'medium' as const,
+    status: 'planning' as const,
+    startDate: '',
+    endDate: '',
+    devsNeeded: '',
+  });
 
   const projectsWithAllocations: ProjectWithAllocations[] = useMemo(() => {
     return projects.map(project => {
@@ -98,6 +109,73 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onEdit, onAddAllocation }) =>
     setExpandedRows(newExpanded);
   };
 
+  const openAddModal = () => {
+    setEditingProject(null);
+    setProjectForm({
+      name: '',
+      description: '',
+      requiredSkills: '',
+      priority: 'medium',
+      status: 'planning',
+      startDate: '',
+      endDate: '',
+      devsNeeded: '',
+    });
+    setShowModal(true);
+  };
+
+  const openEditModal = (project: Project) => {
+    setEditingProject(project);
+    setProjectForm({
+      name: project.name,
+      description: project.description || '',
+      requiredSkills: project.requiredSkills.join(', '),
+      priority: project.priority,
+      status: project.status,
+      startDate: project.startDate ? formatDateInput(project.startDate) : '',
+      endDate: project.endDate ? formatDateInput(project.endDate) : '',
+      devsNeeded: project.devsNeeded ? String(project.devsNeeded) : '',
+    });
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingProject(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const requiredSkills = projectForm.requiredSkills.split(',').map(s => s.trim()).filter(s => s);
+    
+    const projectData = {
+      name: projectForm.name,
+      description: projectForm.description,
+      requiredSkills,
+      priority: projectForm.priority,
+      status: projectForm.status,
+      startDate: projectForm.startDate ? new Date(projectForm.startDate) : undefined,
+      endDate: projectForm.endDate ? new Date(projectForm.endDate) : undefined,
+      devsNeeded: projectForm.devsNeeded ? parseInt(projectForm.devsNeeded) : undefined,
+    };
+
+    if (editingProject) {
+      updateProject(editingProject.id, projectData);
+    } else {
+      addProject({
+        id: `proj${Date.now()}`,
+        ...projectData,
+      } as Project);
+    }
+    closeModal();
+  };
+
+  const handleDelete = (project: Project) => {
+    if (window.confirm(`Are you sure you want to delete ${project.name}? This will also remove all related allocations.`)) {
+      deleteProject(project.id);
+    }
+  };
+
   const stats = useMemo(() => {
     const active = filteredProjects.filter(p => p.status === 'active').length;
     const planning = filteredProjects.filter(p => p.status === 'planning').length;
@@ -170,6 +248,13 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onEdit, onAddAllocation }) =>
             <option value="resources">Sort by Resources</option>
             <option value="name">Sort by Name</option>
           </select>
+          <button
+            onClick={openAddModal}
+            className="px-4 py-2 text-sm bg-gradient-primary text-white hover:shadow-lg rounded-lg transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Project
+          </button>
         </div>
       </div>
 
@@ -274,7 +359,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onEdit, onAddAllocation }) =>
                             <Eye className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => onEdit?.(project.id)}
+                            onClick={() => openEditModal(project)}
                             className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
                             title="Edit project"
                           >
@@ -282,10 +367,17 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onEdit, onAddAllocation }) =>
                           </button>
                           <button 
                             onClick={() => onAddAllocation?.(project.id)}
-                            className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                             title="Add allocation"
                           >
                             <Plus className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(project)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete project"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -409,6 +501,150 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onEdit, onAddAllocation }) =>
           </div>
         )}
       </div>
+
+      {/* Project Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Briefcase className="w-6 h-6 text-primary-600" />
+                {editingProject ? 'Edit Project' : 'Add Project'}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={projectForm.name}
+                  onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Project name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={projectForm.description}
+                  onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Project description"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Required Skills (comma-separated) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={projectForm.requiredSkills}
+                  onChange={(e) => setProjectForm({ ...projectForm, requiredSkills: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="React, TypeScript, Node.js"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Priority *
+                  </label>
+                  <select
+                    value={projectForm.priority}
+                    onChange={(e) => setProjectForm({ ...projectForm, priority: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status *
+                  </label>
+                  <select
+                    value={projectForm.status}
+                    onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="planning">Planning</option>
+                    <option value="active">Active</option>
+                    <option value="on-hold">On Hold</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={projectForm.startDate}
+                    onChange={(e) => setProjectForm({ ...projectForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={projectForm.endDate}
+                    onChange={(e) => setProjectForm({ ...projectForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Developers Needed (Optional)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={projectForm.devsNeeded}
+                  onChange={(e) => setProjectForm({ ...projectForm, devsNeeded: e.target.value })}
+                  placeholder="How many developers are needed?"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-primary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all"
+                >
+                  {editingProject ? 'Update Project' : 'Add Project'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

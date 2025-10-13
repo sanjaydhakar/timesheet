@@ -3,18 +3,16 @@ import { DataProvider, useData } from './contexts/DataContext';
 import ResourceView from './components/ResourceView';
 import ProjectView from './components/ProjectView';
 import AvailabilityFinder from './components/AvailabilityFinder';
-import ManageData from './components/ManageData';
 import TimelineView from './components/TimelineViewEnhanced';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
-import { Users, Briefcase, Search, Settings, Menu, Calendar, X, BarChart3 } from 'lucide-react';
+import { Users, Briefcase, Search, Menu, Calendar, X, BarChart3 } from 'lucide-react';
 
-type ViewType = 'resources' | 'projects' | 'timeline' | 'availability' | 'manage';
+type ViewType = 'resources' | 'projects' | 'timeline' | 'availability';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('timeline');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [manageContext, setManageContext] = useState<{ type?: 'developer' | 'project' | 'allocation', id?: string } | null>(null);
   const { loading, error, refreshData } = useData();
 
   const navigationItems = [
@@ -22,7 +20,6 @@ function AppContent() {
     { id: 'resources' as ViewType, label: 'Resources', icon: Users, description: 'Team overview' },
     { id: 'projects' as ViewType, label: 'Projects', icon: Briefcase, description: 'Project status' },
     { id: 'availability' as ViewType, label: 'Find Resources', icon: Search, description: 'Smart search' },
-    { id: 'manage' as ViewType, label: 'Manage', icon: Settings, description: 'Data management' },
   ];
 
   if (loading) {
@@ -171,38 +168,10 @@ function AppContent() {
         {/* Content Area */}
         <div className="flex-1 overflow-auto p-6">
           <div className="animate-slide-in">
-            {currentView === 'resources' && (
-              <ResourceView 
-                onEdit={(developerId) => {
-                  setManageContext({ type: 'developer', id: developerId });
-                  setCurrentView('manage');
-                }}
-                onAddAllocation={(developerId) => {
-                  setManageContext({ type: 'allocation', id: developerId });
-                  setCurrentView('manage');
-                }}
-              />
-            )}
-            {currentView === 'projects' && (
-              <ProjectView 
-                onEdit={(projectId) => {
-                  setManageContext({ type: 'project', id: projectId });
-                  setCurrentView('manage');
-                }}
-                onAddAllocation={(projectId) => {
-                  setManageContext({ type: 'allocation', id: projectId });
-                  setCurrentView('manage');
-                }}
-              />
-            )}
+            {currentView === 'resources' && <ResourceView />}
+            {currentView === 'projects' && <ProjectView />}
             {currentView === 'timeline' && <TimelineView />}
             {currentView === 'availability' && <AvailabilityFinder />}
-            {currentView === 'manage' && (
-              <ManageData 
-                initialContext={manageContext}
-                onContextCleared={() => setManageContext(null)}
-              />
-            )}
           </div>
         </div>
       </main>
