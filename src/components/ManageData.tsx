@@ -27,6 +27,7 @@ const ManageData: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'developers' | 'projects' | 'allocations'>('developers');
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [returnToAllocationModal, setReturnToAllocationModal] = useState(false);
 
   // Developer form state
   const [developerForm, setDeveloperForm] = useState({
@@ -56,7 +57,7 @@ const ManageData: React.FC = () => {
     notes: '',
   });
 
-  const openDeveloperModal = (developer?: Developer) => {
+  const openDeveloperModal = (developer?: Developer, fromAllocationForm: boolean = false) => {
     if (developer) {
       setEditingId(developer.id);
       setDeveloperForm({
@@ -68,10 +69,11 @@ const ManageData: React.FC = () => {
       setEditingId(null);
       setDeveloperForm({ name: '', email: '', skills: '' });
     }
+    setReturnToAllocationModal(fromAllocationForm);
     setActiveModal('developer');
   };
 
-  const openProjectModal = (project?: Project) => {
+  const openProjectModal = (project?: Project, fromAllocationForm: boolean = false) => {
     if (project) {
       setEditingId(project.id);
       setProjectForm({
@@ -95,6 +97,7 @@ const ManageData: React.FC = () => {
         endDate: '',
       });
     }
+    setReturnToAllocationModal(fromAllocationForm);
     setActiveModal('project');
   };
 
@@ -129,7 +132,12 @@ const ManageData: React.FC = () => {
   };
 
   const closeModal = () => {
-    setActiveModal(null);
+    if (returnToAllocationModal) {
+      setReturnToAllocationModal(false);
+      setActiveModal('allocation');
+    } else {
+      setActiveModal(null);
+    }
     setEditingId(null);
   };
 
@@ -140,12 +148,17 @@ const ManageData: React.FC = () => {
     if (editingId) {
       updateDeveloper(editingId, { ...developerForm, skills });
     } else {
+      const newId = `dev${Date.now()}`;
       addDeveloper({
-        id: `dev${Date.now()}`,
+        id: newId,
         name: developerForm.name,
         email: developerForm.email,
         skills,
       });
+      // If returning to allocation modal, select the newly created developer
+      if (returnToAllocationModal) {
+        setAllocationForm({ ...allocationForm, developerId: newId });
+      }
     }
     closeModal();
   };
@@ -167,10 +180,19 @@ const ManageData: React.FC = () => {
     if (editingId) {
       updateProject(editingId, projectData);
     } else {
+      const newId = `proj${Date.now()}`;
       addProject({
-        id: `proj${Date.now()}`,
+        id: newId,
         ...projectData,
       });
+      // If returning to allocation modal, select the newly created project and prefill end date
+      if (returnToAllocationModal) {
+        setAllocationForm({ 
+          ...allocationForm, 
+          projectId: newId,
+          endDate: projectData.endDate ? formatDateInput(projectData.endDate) : allocationForm.endDate
+        });
+      }
     }
     closeModal();
   };
@@ -641,7 +663,17 @@ const ManageData: React.FC = () => {
             </div>
             <form onSubmit={handleAllocationSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Developer</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Developer</label>
+                  <button
+                    type="button"
+                    onClick={() => openDeveloperModal(undefined, true)}
+                    className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add New
+                  </button>
+                </div>
                 <select
                   required
                   value={allocationForm.developerId}
@@ -654,7 +686,17 @@ const ManageData: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">Project</label>
+                  <button
+                    type="button"
+                    onClick={() => openProjectModal(undefined, true)}
+                    className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add New
+                  </button>
+                </div>
                 <select
                   required
                   value={allocationForm.projectId}

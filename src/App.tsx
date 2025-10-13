@@ -12,7 +12,7 @@ import { Users, Briefcase, Search, Settings, Menu, Calendar } from 'lucide-react
 type ViewType = 'resources' | 'projects' | 'timeline' | 'availability' | 'manage';
 
 function AppContent() {
-  const [currentView, setCurrentView] = useState<ViewType>('resources');
+  const [currentView, setCurrentView] = useState<ViewType>('timeline');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { loading, error, refreshData } = useData();
 
