@@ -6,7 +6,12 @@ import { formatDate, getTodayStart, getNextAvailableDate } from '../utils/dateUt
 import { User, Calendar, TrendingUp, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, Search } from 'lucide-react';
 import { isAfter, isBefore } from 'date-fns';
 
-const ResourceView: React.FC = () => {
+interface ResourceViewProps {
+  onEdit?: (developerId: string) => void;
+  onAddAllocation?: (developerId: string) => void;
+}
+
+const ResourceView: React.FC<ResourceViewProps> = ({ onEdit, onAddAllocation }) => {
   const { developers, projects, allocations } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
@@ -246,13 +251,25 @@ const ResourceView: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors">
+                          <button 
+                            onClick={() => toggleRow(developer.id)}
+                            className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                            title="View details"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors">
+                          <button 
+                            onClick={() => onEdit?.(developer.id)}
+                            className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                            title="Edit developer"
+                          >
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors">
+                          <button 
+                            onClick={() => onAddAllocation?.(developer.id)}
+                            className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                            title="Add allocation"
+                          >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Developer, Project, Allocation } from '../types';
 import { Plus, Edit2, Trash2, User, Briefcase, Calendar, X, Upload } from 'lucide-react';
@@ -7,7 +7,15 @@ import BulkAddDevelopers from './BulkAddDevelopers';
 
 type ModalType = 'developer' | 'project' | 'allocation' | null;
 
-const ManageData: React.FC = () => {
+interface ManageDataProps {
+  initialContext?: {
+    type?: 'developer' | 'project' | 'allocation';
+    id?: string;
+  } | null;
+  onContextCleared?: () => void;
+}
+
+const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleared }) => {
   const {
     developers,
     projects,
@@ -143,6 +151,61 @@ const ManageData: React.FC = () => {
     }
     setEditingId(null);
   };
+
+  // Handle initial context from navigation (e.g., from Resources/Projects view)
+  useEffect(() => {
+    if (initialContext?.type) {
+      if (initialContext.type === 'developer' && initialContext.id) {
+        const developer = developers.find(d => d.id === initialContext.id);
+        if (developer) {
+          openDeveloperModal(developer);
+          setActiveTab('developers');
+        }
+      } else if (initialContext.type === 'project' && initialContext.id) {
+        const project = projects.find(p => p.id === initialContext.id);
+        if (project) {
+          openProjectModal(project);
+          setActiveTab('projects');
+        }
+      } else if (initialContext.type === 'allocation' && initialContext.id) {
+        // ID could be developerId or projectId for new allocation
+        setActiveTab('allocations');
+        // Prefill the form with the provided developer or project
+        const developer = developers.find(d => d.id === initialContext.id);
+        const project = projects.find(p => p.id === initialContext.id);
+        
+        if (developer) {
+          const firstProjectId = projects[0]?.id || '';
+          const firstProject = projects.find(p => p.id === firstProjectId);
+          setAllocationForm({
+            developerId: developer.id,
+            projectId: firstProjectId,
+            bandwidth: 100,
+            startDate: formatDateInput(new Date()),
+            endDate: firstProject?.endDate 
+              ? formatDateInput(firstProject.endDate)
+              : formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            notes: '',
+          });
+        } else if (project) {
+          const firstDeveloperId = developers[0]?.id || '';
+          setAllocationForm({
+            developerId: firstDeveloperId,
+            projectId: project.id,
+            bandwidth: 100,
+            startDate: formatDateInput(new Date()),
+            endDate: project.endDate 
+              ? formatDateInput(project.endDate)
+              : formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            notes: '',
+          });
+        }
+        setActiveModal('allocation');
+      }
+      // Clear the context after handling
+      onContextCleared?.();
+    }
+  }, [initialContext, developers, projects, onContextCleared]);
 
   const handleDeveloperSubmit = (e: React.FormEvent) => {
     e.preventDefault();

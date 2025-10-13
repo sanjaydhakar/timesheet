@@ -14,6 +14,7 @@ type ViewType = 'resources' | 'projects' | 'timeline' | 'availability' | 'manage
 function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('timeline');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [manageContext, setManageContext] = useState<{ type?: 'developer' | 'project' | 'allocation', id?: string } | null>(null);
   const { loading, error, refreshData } = useData();
 
   const navigationItems = [
@@ -170,11 +171,38 @@ function AppContent() {
         {/* Content Area */}
         <div className="flex-1 overflow-auto p-6">
           <div className="animate-slide-in">
-            {currentView === 'resources' && <ResourceView />}
-            {currentView === 'projects' && <ProjectView />}
+            {currentView === 'resources' && (
+              <ResourceView 
+                onEdit={(developerId) => {
+                  setManageContext({ type: 'developer', id: developerId });
+                  setCurrentView('manage');
+                }}
+                onAddAllocation={(developerId) => {
+                  setManageContext({ type: 'allocation', id: developerId });
+                  setCurrentView('manage');
+                }}
+              />
+            )}
+            {currentView === 'projects' && (
+              <ProjectView 
+                onEdit={(projectId) => {
+                  setManageContext({ type: 'project', id: projectId });
+                  setCurrentView('manage');
+                }}
+                onAddAllocation={(projectId) => {
+                  setManageContext({ type: 'allocation', id: projectId });
+                  setCurrentView('manage');
+                }}
+              />
+            )}
             {currentView === 'timeline' && <TimelineView />}
             {currentView === 'availability' && <AvailabilityFinder />}
-            {currentView === 'manage' && <ManageData />}
+            {currentView === 'manage' && (
+              <ManageData 
+                initialContext={manageContext}
+                onContextCleared={() => setManageContext(null)}
+              />
+            )}
           </div>
         </div>
       </main>
