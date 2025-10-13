@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Developer, Project, Allocation } from '../types';
-import { Plus, Edit2, Trash2, User, Briefcase, Calendar, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, User, Briefcase, Calendar, X, Upload } from 'lucide-react';
 import { formatDateInput, formatDate } from '../utils/dateUtils';
+import BulkAddDevelopers from './BulkAddDevelopers';
 
 type ModalType = 'developer' | 'project' | 'allocation' | null;
 
@@ -25,6 +26,7 @@ const ManageData: React.FC = () => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'developers' | 'projects' | 'allocations'>('developers');
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   // Developer form state
   const [developerForm, setDeveloperForm] = useState({
@@ -217,13 +219,22 @@ const ManageData: React.FC = () => {
       {/* Developers Tab */}
       {activeTab === 'developers' && (
         <div className="space-y-4">
-          <button
-            onClick={() => openDeveloperModal()}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Add Developer
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => openDeveloperModal()}
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Add Developer
+            </button>
+            <button
+              onClick={() => setShowBulkImport(true)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+            >
+              <Upload className="w-5 h-5" />
+              Bulk Import
+            </button>
+          </div>
           <div className="grid gap-4">
             {developers.map(developer => (
               <div key={developer.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
@@ -652,6 +663,11 @@ const ManageData: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Bulk Import Modal */}
+      {showBulkImport && (
+        <BulkAddDevelopers onClose={() => setShowBulkImport(false)} />
       )}
     </div>
   );
