@@ -4,7 +4,7 @@ import ResourceView from './components/ResourceView';
 import ProjectView from './components/ProjectView';
 import AvailabilityFinder from './components/AvailabilityFinder';
 import ManageData from './components/ManageData';
-import TimelineView from './components/TimelineView';
+import TimelineView from './components/TimelineViewEnhanced';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
 import { Users, Briefcase, Search, Settings, Menu, Calendar } from 'lucide-react';

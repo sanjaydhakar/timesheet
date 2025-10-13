@@ -7,7 +7,11 @@ A comprehensive full-stack web application for managing developer resources, pro
 ### Core Functionality
 - **Resource View**: Developer-centric view showing individual timelines, project assignments, bandwidth allocation, and availability
 - **Project View**: Project-centric view displaying all developers assigned to each project, completion timelines, and resource allocation
-- **Timeline View**: Visual Gantt-chart style display showing all allocations across time with color-coded projects, bandwidth indicators, and interactive tooltips
+- **Enhanced Timeline View**: 
+  - Visual Gantt-chart style display with color-coded projects and bandwidth indicators
+  - **Drag-to-Add**: Click and drag on any row to quickly create allocations (like Google Calendar)
+  - **Pivot Views**: Toggle between "By Developer" and "By Project" views
+  - Interactive tooltips and real-time updates
 - **Many-to-Many Mapping**: Flexible allocation system allowing developers to work on multiple projects simultaneously
 - **Bandwidth Tracking**: Simple half-time (50%) or full-time (100%) allocation per project
 - **Timeline Management**: Track start/end dates for all initiatives with visibility into current and future availability
@@ -114,9 +118,11 @@ timesheet-cursor/
 │   ├── components/               # React components
 │   │   ├── ResourceView.tsx      # Developer-centric view
 │   │   ├── ProjectView.tsx       # Project-centric view
-│   │   ├── TimelineView.tsx      # Gantt chart timeline
+│   │   ├── TimelineViewEnhanced.tsx # Enhanced Gantt chart with drag-to-add & pivot views
+│   │   ├── TimelineView.tsx      # Legacy timeline view
 │   │   ├── AvailabilityFinder.tsx # Resource search
 │   │   ├── ManageData.tsx        # CRUD operations
+│   │   ├── BulkAddDevelopers.tsx # Bulk import component
 │   │   ├── LoadingState.tsx      # Loading indicator
 │   │   └── ErrorState.tsx        # Error display
 │   ├── contexts/
@@ -193,14 +199,23 @@ See [SETUP.md](SETUP.md) for complete API documentation.
 - View estimated completion dates
 - Filter by status or priority level
 
-### Timeline View
-- Visual Gantt-chart showing all developer allocations over time
-- Color-coded project bars with bandwidth percentages
-- Switch between 3, 6, or 12-month views
-- Navigate backward/forward or jump to today
-- Hover over bars for detailed allocation information
-- Red line indicator showing current date
-- See overlapping allocations and availability at a glance
+### Enhanced Timeline View
+- **Two View Modes**:
+  - **By Developer**: Rows are developers, bars show project allocations (default)
+  - **By Project**: Rows are projects, bars show developer assignments
+- **Drag-to-Add Allocations**:
+  - Click and drag across any row to select a time range
+  - Automatically opens a quick-add form with dates pre-filled
+  - Works like adding events in Google Calendar
+  - Pre-selects the developer or project based on the row
+- **Visual Features**:
+  - Color-coded project bars with bandwidth percentages
+  - Switch between 3, 6, or 12-month views
+  - Navigate backward/forward or jump to today
+  - Hover over bars for detailed allocation information
+  - Red line indicator showing current date
+  - See overlapping allocations and availability at a glance
+- **Smart Sorting**: Developers/projects sorted by utilization (busiest first)
 
 ### Find Resources
 - Specify required bandwidth (50% or 100%)
@@ -245,8 +260,10 @@ Three management tabs:
 3. **Skill Matching**: Find developers with specific expertise for specialized tasks
 4. **Timeline Estimation**: Use project view to understand when current initiatives will complete
 5. **Team Rebalancing**: Identify overallocated developers and redistribute work
-6. **Visual Timeline**: See all allocations at a glance with the Gantt-chart view
-7. **Bulk Onboarding**: Import entire teams at once using CSV or JSON format
+6. **Visual Timeline**: See all allocations at a glance with the enhanced Gantt-chart view
+7. **Quick Allocation**: Drag-to-add allocations directly on the timeline for fast data entry
+8. **Pivot Analysis**: Toggle between developer-view and project-view to analyze from different perspectives
+9. **Bulk Onboarding**: Import entire teams at once using CSV or JSON format
 
 ## Bulk Import Developers
 
