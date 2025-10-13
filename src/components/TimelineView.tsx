@@ -39,6 +39,48 @@ const TimelineView: React.FC = () => {
     return colorMap;
   }, [projects]);
 
+  // Sort developers by current bandwidth (most busy first)
+  const sortedDevelopers = useMemo(() => {
+    const today = getTodayStart();
+    return [...developers].sort((a, b) => {
+      const bandwidthA = allocations
+        .filter(alloc => alloc.developerId === a.id)
+        .reduce((sum, alloc) => {
+          const start = new Date(alloc.startDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(alloc.endDate);
+          end.setHours(0, 0, 0, 0);
+          const todayStart = new Date(today);
+          todayStart.setHours(0, 0, 0, 0);
+          if (start <= todayStart && end >= todayStart) {
+            return sum + alloc.bandwidth;
+          }
+          return sum;
+        }, 0);
+      
+      const bandwidthB = allocations
+        .filter(alloc => alloc.developerId === b.id)
+        .reduce((sum, alloc) => {
+          const start = new Date(alloc.startDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(alloc.endDate);
+          end.setHours(0, 0, 0, 0);
+          const todayStart = new Date(today);
+          todayStart.setHours(0, 0, 0, 0);
+          if (start <= todayStart && end >= todayStart) {
+            return sum + alloc.bandwidth;
+          }
+          return sum;
+        }, 0);
+      
+      // Sort by bandwidth (most busy first), then by name
+      if (bandwidthB !== bandwidthA) {
+        return bandwidthB - bandwidthA;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [developers, allocations]);
+
   const getDaysToShow = () => {
     switch (timeRange) {
       case '3months': return 90;
@@ -229,7 +271,7 @@ const TimelineView: React.FC = () => {
             </div>
 
             {/* Developer rows */}
-            {developers.map((developer, devIndex) => {
+            {sortedDevelopers.map((developer, devIndex) => {
               const timelineBars = getDeveloperTimeline(developer.id);
               const totalBandwidth = timelineBars.reduce((sum, bar) => {
                 // Only count if bar overlaps with today

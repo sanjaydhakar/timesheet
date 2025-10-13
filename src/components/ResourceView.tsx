@@ -35,14 +35,22 @@ const ResourceView: React.FC = () => {
   }, [developers, projects, allocations]);
 
   const filteredDevelopers = useMemo(() => {
-    return developersWithAllocations.filter(dev => {
-      const matchesSearch = dev.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           dev.email.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesSkill = !skillFilter || dev.skills.some(skill => 
-        skill.toLowerCase().includes(skillFilter.toLowerCase())
-      );
-      return matchesSearch && matchesSkill;
-    });
+    return developersWithAllocations
+      .filter(dev => {
+        const matchesSearch = dev.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             dev.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSkill = !skillFilter || dev.skills.some(skill => 
+          skill.toLowerCase().includes(skillFilter.toLowerCase())
+        );
+        return matchesSearch && matchesSkill;
+      })
+      .sort((a, b) => {
+        // Sort by current bandwidth (most busy first, then by name)
+        if (b.currentBandwidth !== a.currentBandwidth) {
+          return b.currentBandwidth - a.currentBandwidth;
+        }
+        return a.name.localeCompare(b.name);
+      });
   }, [developersWithAllocations, searchTerm, skillFilter]);
 
   const allSkills = useMemo(() => {

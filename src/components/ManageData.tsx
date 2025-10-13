@@ -253,7 +253,47 @@ const ManageData: React.FC = () => {
             </button>
           </div>
           <div className="grid gap-4">
-            {developers.map(developer => (
+            {developers
+              .slice()
+              .sort((a, b) => {
+                // Calculate current bandwidth for sorting
+                const bandwidthA = allocations
+                  .filter(alloc => alloc.developerId === a.id)
+                  .reduce((sum, alloc) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const start = new Date(alloc.startDate);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(alloc.endDate);
+                    end.setHours(0, 0, 0, 0);
+                    if (start <= today && end >= today) {
+                      return sum + alloc.bandwidth;
+                    }
+                    return sum;
+                  }, 0);
+                
+                const bandwidthB = allocations
+                  .filter(alloc => alloc.developerId === b.id)
+                  .reduce((sum, alloc) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const start = new Date(alloc.startDate);
+                    start.setHours(0, 0, 0, 0);
+                    const end = new Date(alloc.endDate);
+                    end.setHours(0, 0, 0, 0);
+                    if (start <= today && end >= today) {
+                      return sum + alloc.bandwidth;
+                    }
+                    return sum;
+                  }, 0);
+                
+                // Sort by bandwidth (most busy first), then by name
+                if (bandwidthB !== bandwidthA) {
+                  return bandwidthB - bandwidthA;
+                }
+                return a.name.localeCompare(b.name);
+              })
+              .map(developer => (
               <div key={developer.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <User className="w-8 h-8 text-primary-600" />
