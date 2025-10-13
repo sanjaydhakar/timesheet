@@ -62,6 +62,8 @@ export const projectsApi = {
       requiredSkills: item.required_skills || [],
       priority: item.priority,
       status: item.status,
+      startDate: item.start_date ? new Date(item.start_date) : undefined,
+      endDate: item.end_date ? new Date(item.end_date) : undefined,
     }));
   },
 
@@ -75,6 +77,8 @@ export const projectsApi = {
       requiredSkills: data.required_skills || [],
       priority: data.priority,
       status: data.status,
+      startDate: data.start_date ? new Date(data.start_date) : undefined,
+      endDate: data.end_date ? new Date(data.end_date) : undefined,
     };
   },
 
@@ -89,6 +93,8 @@ export const projectsApi = {
         required_skills: project.requiredSkills,
         priority: project.priority,
         status: project.status,
+        start_date: project.startDate ? project.startDate.toISOString().split('T')[0] : null,
+        end_date: project.endDate ? project.endDate.toISOString().split('T')[0] : null,
       }),
     });
     const data = await handleResponse<any>(response);
@@ -99,6 +105,8 @@ export const projectsApi = {
       requiredSkills: data.required_skills || [],
       priority: data.priority,
       status: data.status,
+      startDate: data.start_date ? new Date(data.start_date) : undefined,
+      endDate: data.end_date ? new Date(data.end_date) : undefined,
     };
   },
 
@@ -112,6 +120,8 @@ export const projectsApi = {
         required_skills: project.requiredSkills,
         priority: project.priority,
         status: project.status,
+        start_date: project.startDate ? project.startDate.toISOString().split('T')[0] : null,
+        end_date: project.endDate ? project.endDate.toISOString().split('T')[0] : null,
       }),
     });
     const data = await handleResponse<any>(response);
@@ -122,6 +132,8 @@ export const projectsApi = {
       requiredSkills: data.required_skills || [],
       priority: data.priority,
       status: data.status,
+      startDate: data.start_date ? new Date(data.start_date) : undefined,
+      endDate: data.end_date ? new Date(data.end_date) : undefined,
     };
   },
 

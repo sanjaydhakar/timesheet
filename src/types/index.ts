@@ -13,6 +13,8 @@ export interface Project {
   requiredSkills: string[];
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'planning' | 'active' | 'completed' | 'on-hold';
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export interface Allocation {

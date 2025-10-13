@@ -54,10 +54,10 @@ router.post(
     }
 
     try {
-      const { id, name, description, required_skills, priority, status } = req.body;
+      const { id, name, description, required_skills, priority, status, start_date, end_date } = req.body;
       const result = await pool.query(
-        'INSERT INTO projects (id, name, description, required_skills, priority, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [id, name, description, required_skills, priority, status]
+        'INSERT INTO projects (id, name, description, required_skills, priority, status, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+        [id, name, description, required_skills, priority, status, start_date || null, end_date || null]
       );
       res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -85,7 +85,7 @@ router.put(
 
     try {
       const { id } = req.params;
-      const { name, description, required_skills, priority, status } = req.body;
+      const { name, description, required_skills, priority, status, start_date, end_date } = req.body;
       
       const result = await pool.query(
         `UPDATE projects 
@@ -93,10 +93,12 @@ router.put(
              description = COALESCE($2, description),
              required_skills = COALESCE($3, required_skills),
              priority = COALESCE($4, priority),
-             status = COALESCE($5, status)
-         WHERE id = $6
+             status = COALESCE($5, status),
+             start_date = COALESCE($6, start_date),
+             end_date = COALESCE($7, end_date)
+         WHERE id = $8
          RETURNING *`,
-        [name, description, required_skills, priority, status, id]
+        [name, description, required_skills, priority, status, start_date, end_date, id]
       );
       
       if (result.rows.length === 0) {

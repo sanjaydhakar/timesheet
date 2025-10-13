@@ -42,13 +42,15 @@ const ManageData: React.FC = () => {
     requiredSkills: '',
     priority: 'medium' as const,
     status: 'planning' as const,
+    startDate: '',
+    endDate: '',
   });
 
   // Allocation form state
   const [allocationForm, setAllocationForm] = useState({
     developerId: '',
     projectId: '',
-    bandwidth: 50 as 50 | 100,
+    bandwidth: 100 as 50 | 100,
     startDate: formatDateInput(new Date()),
     endDate: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
     notes: '',
@@ -78,6 +80,8 @@ const ManageData: React.FC = () => {
         requiredSkills: project.requiredSkills.join(', '),
         priority: project.priority,
         status: project.status,
+        startDate: project.startDate ? formatDateInput(project.startDate) : '',
+        endDate: project.endDate ? formatDateInput(project.endDate) : '',
       });
     } else {
       setEditingId(null);
@@ -87,6 +91,8 @@ const ManageData: React.FC = () => {
         requiredSkills: '',
         priority: 'medium',
         status: 'planning',
+        startDate: '',
+        endDate: '',
       });
     }
     setActiveModal('project');
@@ -105,12 +111,17 @@ const ManageData: React.FC = () => {
       });
     } else {
       setEditingId(null);
+      const firstProjectId = projects[0]?.id || '';
+      const firstProject = projects.find(p => p.id === firstProjectId);
+      
       setAllocationForm({
         developerId: developers[0]?.id || '',
-        projectId: projects[0]?.id || '',
-        bandwidth: 50,
+        projectId: firstProjectId,
+        bandwidth: 100,
         startDate: formatDateInput(new Date()),
-        endDate: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+        endDate: firstProject?.endDate 
+          ? formatDateInput(firstProject.endDate)
+          : formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
         notes: '',
       });
     }
@@ -143,16 +154,22 @@ const ManageData: React.FC = () => {
     e.preventDefault();
     const requiredSkills = projectForm.requiredSkills.split(',').map(s => s.trim()).filter(s => s);
     
+    const projectData = {
+      name: projectForm.name,
+      description: projectForm.description,
+      requiredSkills,
+      priority: projectForm.priority,
+      status: projectForm.status,
+      startDate: projectForm.startDate ? new Date(projectForm.startDate) : undefined,
+      endDate: projectForm.endDate ? new Date(projectForm.endDate) : undefined,
+    };
+    
     if (editingId) {
-      updateProject(editingId, { ...projectForm, requiredSkills });
+      updateProject(editingId, projectData);
     } else {
       addProject({
         id: `proj${Date.now()}`,
-        name: projectForm.name,
-        description: projectForm.description,
-        requiredSkills,
-        priority: projectForm.priority,
-        status: projectForm.status,
+        ...projectData,
       });
     }
     closeModal();
@@ -526,6 +543,30 @@ const ManageData: React.FC = () => {
                   </select>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={projectForm.startDate}
+                    onChange={(e) => setProjectForm({ ...projectForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={projectForm.endDate}
+                    onChange={(e) => setProjectForm({ ...projectForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -577,7 +618,16 @@ const ManageData: React.FC = () => {
                 <select
                   required
                   value={allocationForm.projectId}
-                  onChange={(e) => setAllocationForm({ ...allocationForm, projectId: e.target.value })}
+                  onChange={(e) => {
+                    const selectedProject = projects.find(p => p.id === e.target.value);
+                    setAllocationForm({ 
+                      ...allocationForm, 
+                      projectId: e.target.value,
+                      endDate: selectedProject?.endDate 
+                        ? formatDateInput(selectedProject.endDate)
+                        : allocationForm.endDate
+                    });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   {projects.map(proj => (
