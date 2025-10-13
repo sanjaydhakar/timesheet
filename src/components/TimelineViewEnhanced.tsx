@@ -551,15 +551,17 @@ const TimelineViewEnhanced: React.FC = () => {
       )}
 
       {/* Timeline */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-200">
         <div className="overflow-x-auto">
           <div className="min-w-[800px]">
             {/* Header */}
-            <div className="flex border-b border-gray-200 bg-gray-50">
-              <div className="w-48 flex-shrink-0 p-3 font-semibold text-gray-700 border-r border-gray-200">
-                {viewMode === 'resource' ? 'Developer' : 'Project'}
+            <div className="flex border-b-2 border-gray-100 bg-gradient-to-b from-gray-50 to-white">
+              <div className="w-56 flex-shrink-0 px-4 py-4 font-semibold text-gray-800 border-r border-gray-200 flex items-center">
+                <span className="text-sm uppercase tracking-wide">
+                  {viewMode === 'resource' ? 'Team Member' : 'Project'}
+                </span>
               </div>
-              <div className="flex-1 relative h-12" ref={timelineRef}>
+              <div className="flex-1 relative h-14" ref={timelineRef}>
                 {months.map((month, index) => {
                   const monthStart = month < startDate ? startDate : month;
                   const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0) > endDate 
@@ -572,14 +574,17 @@ const TimelineViewEnhanced: React.FC = () => {
                   return (
                     <div
                       key={index}
-                      className="absolute top-0 bottom-0 border-r border-gray-300 flex items-center justify-center"
+                      className="absolute top-0 bottom-0 border-r border-gray-200 flex flex-col items-center justify-center bg-gradient-to-b from-transparent to-gray-50/50"
                       style={{
                         left: `${monthStartPos}%`,
                         width: `${monthWidth}%`,
                       }}
                     >
-                      <span className="text-sm font-medium text-gray-700">
-                        {format(month, 'MMM yyyy')}
+                      <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                        {format(month, 'MMM')}
+                      </span>
+                      <span className="text-xs text-gray-500 mt-0.5">
+                        {format(month, 'yyyy')}
                       </span>
                     </div>
                   );
@@ -600,38 +605,49 @@ const TimelineViewEnhanced: React.FC = () => {
                     return sum;
                   }, 0);
 
+                  const isOverloaded = totalBandwidth > 100;
+                  const statusColor = totalBandwidth === 0 ? 'bg-gray-100 text-gray-600' : 
+                                     isOverloaded ? 'bg-red-100 text-red-700' : 
+                                     totalBandwidth === 100 ? 'bg-orange-100 text-orange-700' : 
+                                     'bg-green-100 text-green-700';
+
                   return (
                     <div
                       key={developer.id}
-                      className={`flex ${devIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
+                      className={`flex border-b border-gray-100 hover:bg-blue-50/50 transition-all group ${
+                        devIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                      }`}
                     >
-                      <div className="w-48 flex-shrink-0 p-3 border-r border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <User className="w-4 h-4 text-primary-600" />
+                      <div className="w-56 flex-shrink-0 px-4 py-4 border-r border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <User className="w-5 h-5 text-white" />
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-medium text-gray-900 text-sm truncate">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-gray-900 text-sm truncate">
                               {developer.name}
                             </div>
-                            <div className="text-xs text-gray-600">
-                              {totalBandwidth}% allocated
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                                {totalBandwidth}%
+                              </span>
+                              {isOverloaded && <span className="text-xs text-red-600 font-medium">Overloaded!</span>}
                             </div>
                           </div>
                         </div>
                       </div>
                       <div 
-                        className="flex-1 relative h-20 border-r border-gray-200 cursor-crosshair"
+                        className="flex-1 relative h-24 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
                         onMouseDown={(e) => handleMouseDown(e, developer.id, 'developer')}
                       >
-                        {/* Month dividers */}
+                        {/* Week dividers - subtle grid */}
                         {months.map((month, index) => {
                           const monthStart = month < startDate ? startDate : month;
                           const pos = calculatePosition(monthStart);
                           return (
                             <div
                               key={index}
-                              className="absolute top-0 bottom-0 border-r border-gray-200 pointer-events-none"
+                              className="absolute top-0 bottom-0 border-r border-gray-100 pointer-events-none"
                               style={{ left: `${pos}%` }}
                             />
                           );
@@ -640,9 +656,11 @@ const TimelineViewEnhanced: React.FC = () => {
                         {/* Today indicator */}
                         {todayPosition !== null && (
                           <div
-                            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
+                            className="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-400 to-red-600 z-10 pointer-events-none shadow-glow"
                             style={{ left: `${todayPosition}%` }}
-                          />
+                          >
+                            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full shadow-md"></div>
+                          </div>
                         )}
 
                         {/* Drag selection */}
@@ -657,17 +675,17 @@ const TimelineViewEnhanced: React.FC = () => {
                         )}
 
                         {/* Allocation bars */}
-                        <div className="absolute inset-0 p-1 pointer-events-auto">
+                        <div className="absolute inset-0 p-2 pointer-events-auto">
                           {timelineBars.map((bar, barIndex) => (
                             <div
                               key={`${bar.allocation.id}-${barIndex}`}
-                              className={`absolute ${projectColors[bar.project.id]} rounded shadow-sm group cursor-pointer hover:opacity-100 hover:shadow-lg transition-all`}
+                              className={`absolute ${projectColors[bar.project.id]} rounded-lg shadow-md group cursor-pointer hover:opacity-100 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 border-2 border-white/20`}
                               style={{
                                 left: `${bar.startPos}%`,
                                 width: `${bar.width}%`,
-                                top: `${(barIndex * 28) + 4}px`,
-                                height: '20px',
-                                opacity: 0.9,
+                                top: `${(barIndex * 32) + 6}px`,
+                                height: '24px',
+                                opacity: 0.95,
                               }}
                               title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
                               onClick={(e) => {
@@ -675,9 +693,9 @@ const TimelineViewEnhanced: React.FC = () => {
                                 handleEditAllocation(bar.allocation);
                               }}
                             >
-                              <div className="h-full flex items-center px-2 text-white text-xs font-medium truncate">
+                              <div className="h-full flex items-center justify-between px-3 text-white text-xs font-semibold">
                                 <span className="truncate">{bar.project.name}</span>
-                                <span className="ml-1 flex-shrink-0">({bar.allocation.bandwidth}%)</span>
+                                <span className="ml-2 px-1.5 py-0.5 bg-white/20 rounded text-[10px] flex-shrink-0">{bar.allocation.bandwidth}%</span>
                               </div>
                             </div>
                           ))}
@@ -696,28 +714,42 @@ const TimelineViewEnhanced: React.FC = () => {
                       .map(a => a.developerId)
                   ).size;
 
+                  const priorityColors = {
+                    low: 'bg-gray-100 text-gray-700',
+                    medium: 'bg-blue-100 text-blue-700',
+                    high: 'bg-orange-100 text-orange-700',
+                    critical: 'bg-red-100 text-red-700'
+                  };
+
                   return (
                     <div
                       key={project.id}
-                      className={`flex ${projIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}
+                      className={`flex border-b border-gray-100 hover:bg-purple-50/50 transition-all group ${
+                        projIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                      }`}
                     >
-                      <div className="w-48 flex-shrink-0 p-3 border-r border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-8 h-8 ${projectColors[project.id]} rounded-full flex items-center justify-center flex-shrink-0`}>
-                            <Briefcase className="w-4 h-4 text-white" />
+                      <div className="w-56 flex-shrink-0 px-4 py-4 border-r border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 ${projectColors[project.id]} rounded-full flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                            <Briefcase className="w-5 h-5 text-white" />
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-medium text-gray-900 text-sm truncate">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-gray-900 text-sm truncate">
                               {project.name}
                             </div>
-                            <div className="text-xs text-gray-600">
-                              {activeDevelopers} developer{activeDevelopers !== 1 ? 's' : ''}
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${priorityColors[project.priority]}`}>
+                                {project.priority}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {activeDevelopers} dev{activeDevelopers !== 1 ? 's' : ''}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
                       <div 
-                        className="flex-1 relative h-20 border-r border-gray-200 cursor-crosshair"
+                        className="flex-1 relative h-24 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
                         onMouseDown={(e) => handleMouseDown(e, project.id, 'project')}
                       >
                         {/* Month dividers */}
@@ -727,7 +759,7 @@ const TimelineViewEnhanced: React.FC = () => {
                           return (
                             <div
                               key={index}
-                              className="absolute top-0 bottom-0 border-r border-gray-200 pointer-events-none"
+                              className="absolute top-0 bottom-0 border-r border-gray-100 pointer-events-none"
                               style={{ left: `${pos}%` }}
                             />
                           );
@@ -736,9 +768,11 @@ const TimelineViewEnhanced: React.FC = () => {
                         {/* Today indicator */}
                         {todayPosition !== null && (
                           <div
-                            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
+                            className="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-red-400 to-red-600 z-10 pointer-events-none shadow-glow"
                             style={{ left: `${todayPosition}%` }}
-                          />
+                          >
+                            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full shadow-md"></div>
+                          </div>
                         )}
 
                         {/* Drag selection */}
