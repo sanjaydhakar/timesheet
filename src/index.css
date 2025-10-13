@@ -113,7 +113,7 @@ body {
 }
 
 .badge-success {
-  @apply bg-accent-100 text-accent-800;
+  @apply bg-green-100 text-green-800;
 }
 
 .badge-warning {
@@ -138,7 +138,7 @@ body {
 }
 
 .btn-success {
-  @apply text-white bg-gradient-to-r from-accent-600 to-accent-700 hover:from-accent-700 hover:to-accent-800 shadow-lg shadow-accent-500/50;
+  @apply text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/50;
 }
 
 /* Card enhancements */

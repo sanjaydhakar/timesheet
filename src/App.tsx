@@ -160,7 +160,7 @@ function AppContent() {
             
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/70 rounded-lg border border-gray-200/50">
-                <div className="w-2 h-2 bg-accent-500 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm text-gray-700 font-medium">Live</span>
               </div>
             </div>
