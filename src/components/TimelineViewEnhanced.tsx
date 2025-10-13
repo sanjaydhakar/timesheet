@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useData } from '../contexts/DataContext';
 import { formatDate, getTodayStart, formatDateInput } from '../utils/dateUtils';
-import { Calendar, ChevronLeft, ChevronRight, User, Briefcase, X, LayoutGrid } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, User, Briefcase, X, LayoutGrid, Plus } from 'lucide-react';
 import { addDays, differenceInDays, eachMonthOfInterval, format } from 'date-fns';
+import { Developer, Project } from '../types';
 
 interface TimelineBar {
   allocation: any;
@@ -19,7 +20,7 @@ interface DragSelection {
 }
 
 const TimelineViewEnhanced: React.FC = () => {
-  const { developers, projects, allocations, addAllocation } = useData();
+  const { developers, projects, allocations, addAllocation, addDeveloper, addProject } = useData();
   const [viewMode, setViewMode] = useState<'resource' | 'project'>('resource');
   const [timeRange, setTimeRange] = useState<'3months' | '6months' | '12months'>('6months');
   const [startDate, setStartDate] = useState(() => {
@@ -31,7 +32,27 @@ const TimelineViewEnhanced: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddData, setQuickAddData] = useState<any>(null);
+  const [showDeveloperModal, setShowDeveloperModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [savedQuickAddData, setSavedQuickAddData] = useState<any>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Form state for creating developers/projects
+  const [newDeveloperForm, setNewDeveloperForm] = useState({
+    name: '',
+    email: '',
+    skills: '',
+  });
+
+  const [newProjectForm, setNewProjectForm] = useState({
+    name: '',
+    description: '',
+    requiredSkills: '',
+    priority: 'medium' as const,
+    status: 'planning' as const,
+    startDate: '',
+    endDate: '',
+  });
 
   const projectColors: Record<string, string> = useMemo(() => {
     const colors = [
@@ -260,6 +281,90 @@ const TimelineViewEnhanced: React.FC = () => {
     } catch (error) {
       console.error('Error adding allocation:', error);
       alert('Failed to add allocation');
+    }
+  };
+
+  const handleOpenDeveloperModal = () => {
+    setSavedQuickAddData(quickAddData);
+    setShowQuickAdd(false);
+    setNewDeveloperForm({ name: '', email: '', skills: '' });
+    setShowDeveloperModal(true);
+  };
+
+  const handleOpenProjectModal = () => {
+    setSavedQuickAddData(quickAddData);
+    setShowQuickAdd(false);
+    setNewProjectForm({
+      name: '',
+      description: '',
+      requiredSkills: '',
+      priority: 'medium',
+      status: 'planning',
+      startDate: '',
+      endDate: '',
+    });
+    setShowProjectModal(true);
+  };
+
+  const handleDeveloperSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const skills = newDeveloperForm.skills.split(',').map(s => s.trim()).filter(s => s);
+    
+    try {
+      const newDeveloper: Developer = {
+        id: `dev${Date.now()}`,
+        name: newDeveloperForm.name,
+        email: newDeveloperForm.email,
+        skills,
+      };
+      
+      await addDeveloper(newDeveloper);
+      setShowDeveloperModal(false);
+      
+      // Return to quick add modal with new developer selected
+      if (savedQuickAddData) {
+        setQuickAddData({ ...savedQuickAddData, selectedDeveloperId: newDeveloper.id });
+        setShowQuickAdd(true);
+        setSavedQuickAddData(null);
+      }
+    } catch (error) {
+      console.error('Error creating developer:', error);
+      alert('Failed to create developer');
+    }
+  };
+
+  const handleProjectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const requiredSkills = newProjectForm.requiredSkills.split(',').map(s => s.trim()).filter(s => s);
+    
+    try {
+      const newProject: Project = {
+        id: `proj${Date.now()}`,
+        name: newProjectForm.name,
+        description: newProjectForm.description,
+        requiredSkills,
+        priority: newProjectForm.priority,
+        status: newProjectForm.status,
+        startDate: newProjectForm.startDate ? new Date(newProjectForm.startDate) : undefined,
+        endDate: newProjectForm.endDate ? new Date(newProjectForm.endDate) : undefined,
+      };
+      
+      await addProject(newProject);
+      setShowProjectModal(false);
+      
+      // Return to quick add modal with new project selected
+      if (savedQuickAddData) {
+        setQuickAddData({ 
+          ...savedQuickAddData, 
+          selectedProjectId: newProject.id,
+          suggestedEndDate: newProject.endDate,
+        });
+        setShowQuickAdd(true);
+        setSavedQuickAddData(null);
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+      alert('Failed to create project');
     }
   };
 
@@ -653,10 +758,21 @@ const TimelineViewEnhanced: React.FC = () => {
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Developer</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Developer</label>
+                    <button
+                      type="button"
+                      onClick={handleOpenDeveloperModal}
+                      className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add New
+                    </button>
+                  </div>
                   <select
                     name="developer"
                     required
+                    defaultValue={quickAddData.selectedDeveloperId || developers[0]?.id}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
                     {developers.map(dev => (
@@ -678,10 +794,21 @@ const TimelineViewEnhanced: React.FC = () => {
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">Project</label>
+                    <button
+                      type="button"
+                      onClick={handleOpenProjectModal}
+                      className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add New
+                    </button>
+                  </div>
                   <select
                     name="project"
                     required
+                    defaultValue={quickAddData.selectedProjectId || projects[0]?.id}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   >
                     {projects.map(proj => (
@@ -722,7 +849,7 @@ const TimelineViewEnhanced: React.FC = () => {
                     type="date"
                     name="endDate"
                     required
-                    defaultValue={formatDateInput(quickAddData.endDate)}
+                    defaultValue={quickAddData.suggestedEndDate ? formatDateInput(quickAddData.suggestedEndDate) : formatDateInput(quickAddData.endDate)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
@@ -754,6 +881,216 @@ const TimelineViewEnhanced: React.FC = () => {
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
                 >
                   Add Allocation
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Developer Creation Modal */}
+      {showDeveloperModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Add New Developer</h3>
+              <button
+                onClick={() => {
+                  setShowDeveloperModal(false);
+                  if (savedQuickAddData) {
+                    setQuickAddData(savedQuickAddData);
+                    setShowQuickAdd(true);
+                    setSavedQuickAddData(null);
+                  }
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleDeveloperSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newDeveloperForm.name}
+                  onChange={(e) => setNewDeveloperForm({ ...newDeveloperForm, name: e.target.value })}
+                  placeholder="John Doe"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={newDeveloperForm.email}
+                  onChange={(e) => setNewDeveloperForm({ ...newDeveloperForm, email: e.target.value })}
+                  placeholder="john@example.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Skills (comma-separated) *</label>
+                <input
+                  type="text"
+                  required
+                  value={newDeveloperForm.skills}
+                  onChange={(e) => setNewDeveloperForm({ ...newDeveloperForm, skills: e.target.value })}
+                  placeholder="React, TypeScript, Node.js"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeveloperModal(false);
+                    if (savedQuickAddData) {
+                      setQuickAddData(savedQuickAddData);
+                      setShowQuickAdd(true);
+                      setSavedQuickAddData(null);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                >
+                  Create Developer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Project Creation Modal */}
+      {showProjectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Add New Project</h3>
+              <button
+                onClick={() => {
+                  setShowProjectModal(false);
+                  if (savedQuickAddData) {
+                    setQuickAddData(savedQuickAddData);
+                    setShowQuickAdd(true);
+                    setSavedQuickAddData(null);
+                  }
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleProjectSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Project Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newProjectForm.name}
+                  onChange={(e) => setNewProjectForm({ ...newProjectForm, name: e.target.value })}
+                  placeholder="Website Redesign"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <textarea
+                  required
+                  value={newProjectForm.description}
+                  onChange={(e) => setNewProjectForm({ ...newProjectForm, description: e.target.value })}
+                  placeholder="Complete overhaul of company website"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Required Skills (comma-separated) *</label>
+                <input
+                  type="text"
+                  required
+                  value={newProjectForm.requiredSkills}
+                  onChange={(e) => setNewProjectForm({ ...newProjectForm, requiredSkills: e.target.value })}
+                  placeholder="React, Design, Backend"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <select
+                    value={newProjectForm.priority}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, priority: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={newProjectForm.status}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, status: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="planning">Planning</option>
+                    <option value="active">Active</option>
+                    <option value="on-hold">On Hold</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={newProjectForm.startDate}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={newProjectForm.endDate}
+                    onChange={(e) => setNewProjectForm({ ...newProjectForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProjectModal(false);
+                    if (savedQuickAddData) {
+                      setQuickAddData(savedQuickAddData);
+                      setShowQuickAdd(true);
+                      setSavedQuickAddData(null);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                >
+                  Create Project
                 </button>
               </div>
             </form>
