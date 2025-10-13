@@ -213,6 +213,10 @@ See [SETUP.md](SETUP.md) for complete API documentation.
 ### Manage Data
 Three management tabs:
 1. **Developers**: Add/edit/delete developers and their skills
+   - **Bulk Import**: Import multiple developers at once via CSV or JSON
+   - Download templates for easy formatting
+   - Automatic validation and duplicate checking
+   - Detailed success/failure reporting
 2. **Projects**: Manage project details, priorities, and required skills
 3. **Allocations**: Create and manage developer-to-project assignments with bandwidth and date ranges
 
@@ -242,6 +246,45 @@ Three management tabs:
 4. **Timeline Estimation**: Use project view to understand when current initiatives will complete
 5. **Team Rebalancing**: Identify overallocated developers and redistribute work
 6. **Visual Timeline**: See all allocations at a glance with the Gantt-chart view
+7. **Bulk Onboarding**: Import entire teams at once using CSV or JSON format
+
+## Bulk Import Developers
+
+The bulk import feature allows you to add multiple developers at once:
+
+### CSV Format
+```csv
+name,email,skills
+John Doe,john@example.com,"React,TypeScript,Node.js"
+Jane Smith,jane@example.com,"Python,Django,PostgreSQL"
+```
+
+### JSON Format
+```json
+[
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "skills": ["React", "TypeScript", "Node.js"]
+  },
+  {
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "skills": ["Python", "Django", "PostgreSQL"]
+  }
+]
+```
+
+### How to Use
+1. Go to **Manage Data** → **Developers** tab
+2. Click **Bulk Import** button
+3. Choose CSV or JSON format
+4. Download a template (optional)
+5. Upload a file or paste data
+6. Click **Import Developers**
+7. Review results - see which succeeded/failed
+
+Sample files are available in the `examples/` directory.
 
 ## Troubleshooting
 
