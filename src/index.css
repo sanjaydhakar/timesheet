@@ -134,7 +134,7 @@ body {
 }
 
 .btn-secondary {
-  @apply text-white bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-700 hover:to-secondary-800 shadow-lg shadow-secondary-500/50;
+  @apply text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg shadow-purple-500/50;
 }
 
 .btn-success {
