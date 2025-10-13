@@ -7,6 +7,7 @@ A comprehensive web application for managing developer resources, project alloca
 ### Core Functionality
 - **Resource View**: Developer-centric view showing individual timelines, project assignments, bandwidth allocation, and availability
 - **Project View**: Project-centric view displaying all developers assigned to each project, completion timelines, and resource allocation
+- **Timeline View**: Visual Gantt-chart style display showing all allocations across time with color-coded projects, bandwidth indicators, and interactive tooltips
 - **Many-to-Many Mapping**: Flexible allocation system allowing developers to work on multiple projects simultaneously
 - **Bandwidth Tracking**: Monitor allocation percentages (partial/full) for each developer per project
 - **Timeline Management**: Track start/end dates for all initiatives with visibility into current and future availability
@@ -69,6 +70,15 @@ The built files will be in the `dist` directory.
 - See which developers are assigned to each project
 - View estimated completion dates
 - Filter by status or priority level
+
+### Timeline View
+- Visual Gantt-chart showing all developer allocations over time
+- Color-coded project bars with bandwidth percentages
+- Switch between 3, 6, or 12-month views
+- Navigate backward/forward or jump to today
+- Hover over bars for detailed allocation information
+- Red line indicator showing current date
+- See overlapping allocations and availability at a glance
 
 ### Find Resources
 - Specify required bandwidth percentage
