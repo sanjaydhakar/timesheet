@@ -64,6 +64,7 @@ export const projectsApi = {
       status: item.status,
       startDate: item.start_date ? new Date(item.start_date) : undefined,
       endDate: item.end_date ? new Date(item.end_date) : undefined,
+      devsNeeded: item.devs_needed,
     }));
   },
 
@@ -79,6 +80,7 @@ export const projectsApi = {
       status: data.status,
       startDate: data.start_date ? new Date(data.start_date) : undefined,
       endDate: data.end_date ? new Date(data.end_date) : undefined,
+      devsNeeded: data.devs_needed,
     };
   },
 
@@ -95,6 +97,7 @@ export const projectsApi = {
         status: project.status,
         start_date: project.startDate ? project.startDate.toISOString().split('T')[0] : null,
         end_date: project.endDate ? project.endDate.toISOString().split('T')[0] : null,
+        devs_needed: project.devsNeeded,
       }),
     });
     const data = await handleResponse<any>(response);
@@ -107,6 +110,7 @@ export const projectsApi = {
       status: data.status,
       startDate: data.start_date ? new Date(data.start_date) : undefined,
       endDate: data.end_date ? new Date(data.end_date) : undefined,
+      devsNeeded: data.devs_needed,
     };
   },
 
@@ -122,6 +126,7 @@ export const projectsApi = {
         status: project.status,
         start_date: project.startDate ? project.startDate.toISOString().split('T')[0] : null,
         end_date: project.endDate ? project.endDate.toISOString().split('T')[0] : null,
+        devs_needed: project.devsNeeded,
       }),
     });
     const data = await handleResponse<any>(response);
@@ -134,6 +139,7 @@ export const projectsApi = {
       status: data.status,
       startDate: data.start_date ? new Date(data.start_date) : undefined,
       endDate: data.end_date ? new Date(data.end_date) : undefined,
+      devsNeeded: data.devs_needed,
     };
   },
 

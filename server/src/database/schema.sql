@@ -24,6 +24,9 @@ CREATE TABLE projects (
   required_skills TEXT[] NOT NULL DEFAULT '{}',
   priority VARCHAR(20) CHECK (priority IN ('low', 'medium', 'high', 'critical')) NOT NULL DEFAULT 'medium',
   status VARCHAR(20) CHECK (status IN ('planning', 'active', 'on-hold', 'completed')) NOT NULL DEFAULT 'planning',
+  start_date DATE,
+  end_date DATE,
+  devs_needed INTEGER CHECK (devs_needed > 0),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

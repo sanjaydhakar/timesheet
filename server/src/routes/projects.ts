@@ -46,6 +46,7 @@ router.post(
     body('required_skills').isArray(),
     body('priority').isIn(['low', 'medium', 'high', 'critical']),
     body('status').isIn(['planning', 'active', 'on-hold', 'completed']),
+    body('devs_needed').optional().isInt({ min: 1 }),
   ],
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -54,10 +55,10 @@ router.post(
     }
 
     try {
-      const { id, name, description, required_skills, priority, status, start_date, end_date } = req.body;
+      const { id, name, description, required_skills, priority, status, start_date, end_date, devs_needed } = req.body;
       const result = await pool.query(
-        'INSERT INTO projects (id, name, description, required_skills, priority, status, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-        [id, name, description || '', required_skills, priority, status, start_date || null, end_date || null]
+        'INSERT INTO projects (id, name, description, required_skills, priority, status, start_date, end_date, devs_needed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+        [id, name, description || '', required_skills, priority, status, start_date || null, end_date || null, devs_needed || null]
       );
       res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -76,6 +77,7 @@ router.put(
     body('required_skills').optional().isArray(),
     body('priority').optional().isIn(['low', 'medium', 'high', 'critical']),
     body('status').optional().isIn(['planning', 'active', 'on-hold', 'completed']),
+    body('devs_needed').optional().isInt({ min: 1 }),
   ],
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -85,7 +87,7 @@ router.put(
 
     try {
       const { id } = req.params;
-      const { name, description, required_skills, priority, status, start_date, end_date } = req.body;
+      const { name, description, required_skills, priority, status, start_date, end_date, devs_needed } = req.body;
       
       const result = await pool.query(
         `UPDATE projects 
@@ -95,10 +97,11 @@ router.put(
              priority = COALESCE($4, priority),
              status = COALESCE($5, status),
              start_date = COALESCE($6, start_date),
-             end_date = COALESCE($7, end_date)
-         WHERE id = $8
+             end_date = COALESCE($7, end_date),
+             devs_needed = COALESCE($8, devs_needed)
+         WHERE id = $9
          RETURNING *`,
-        [name, description, required_skills, priority, status, start_date, end_date, id]
+        [name, description, required_skills, priority, status, start_date, end_date, devs_needed, id]
       );
       
       if (result.rows.length === 0) {

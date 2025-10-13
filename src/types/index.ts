@@ -15,6 +15,7 @@ export interface Project {
   status: 'planning' | 'active' | 'completed' | 'on-hold';
   startDate?: Date;
   endDate?: Date;
+  devsNeeded?: number;
 }
 
 export interface Allocation {

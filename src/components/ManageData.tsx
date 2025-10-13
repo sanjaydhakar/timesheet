@@ -45,6 +45,7 @@ const ManageData: React.FC = () => {
     status: 'planning' as const,
     startDate: '',
     endDate: '',
+    devsNeeded: '',
   });
 
   // Allocation form state
@@ -78,12 +79,13 @@ const ManageData: React.FC = () => {
       setEditingId(project.id);
       setProjectForm({
         name: project.name,
-        description: project.description,
+        description: project.description || '',
         requiredSkills: project.requiredSkills.join(', '),
         priority: project.priority,
         status: project.status,
         startDate: project.startDate ? formatDateInput(project.startDate) : '',
         endDate: project.endDate ? formatDateInput(project.endDate) : '',
+        devsNeeded: project.devsNeeded ? String(project.devsNeeded) : '',
       });
     } else {
       setEditingId(null);
@@ -95,6 +97,7 @@ const ManageData: React.FC = () => {
         status: 'planning',
         startDate: '',
         endDate: '',
+        devsNeeded: '',
       });
     }
     setReturnToAllocationModal(fromAllocationForm);
@@ -175,6 +178,7 @@ const ManageData: React.FC = () => {
       status: projectForm.status,
       startDate: projectForm.startDate ? new Date(projectForm.startDate) : undefined,
       endDate: projectForm.endDate ? new Date(projectForm.endDate) : undefined,
+      devsNeeded: projectForm.devsNeeded ? parseInt(projectForm.devsNeeded) : undefined,
     };
     
     if (editingId) {
@@ -628,6 +632,19 @@ const ManageData: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Developers Needed (Optional)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={projectForm.devsNeeded}
+                  onChange={(e) => setProjectForm({ ...projectForm, devsNeeded: e.target.value })}
+                  placeholder="How many developers are needed?"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
               </div>
               <div className="flex gap-3">
                 <button

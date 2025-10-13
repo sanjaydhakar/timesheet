@@ -54,6 +54,7 @@ const TimelineViewEnhanced: React.FC = () => {
     status: 'planning' as const,
     startDate: '',
     endDate: '',
+    devsNeeded: '',
   });
 
   const projectColors: Record<string, string> = useMemo(() => {
@@ -349,6 +350,7 @@ const TimelineViewEnhanced: React.FC = () => {
         status: newProjectForm.status,
         startDate: newProjectForm.startDate ? new Date(newProjectForm.startDate) : undefined,
         endDate: newProjectForm.endDate ? new Date(newProjectForm.endDate) : undefined,
+        devsNeeded: newProjectForm.devsNeeded ? parseInt(newProjectForm.devsNeeded) : undefined,
       };
       
       await addProject(newProject);
@@ -1286,6 +1288,19 @@ const TimelineViewEnhanced: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Developers Needed (Optional)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newProjectForm.devsNeeded}
+                  onChange={(e) => setNewProjectForm({ ...newProjectForm, devsNeeded: e.target.value })}
+                  placeholder="How many developers are needed?"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                />
               </div>
               <div className="flex gap-3">
                 <button
