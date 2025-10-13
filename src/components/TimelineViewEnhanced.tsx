@@ -1002,9 +1002,8 @@ const TimelineViewEnhanced: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
                 <textarea
-                  required
                   value={newProjectForm.description}
                   onChange={(e) => setNewProjectForm({ ...newProjectForm, description: e.target.value })}
                   placeholder="Complete overhaul of company website"

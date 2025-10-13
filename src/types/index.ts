@@ -9,7 +9,7 @@ export interface Developer {
 export interface Project {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   requiredSkills: string[];
   priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'planning' | 'active' | 'completed' | 'on-hold';

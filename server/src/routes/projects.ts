@@ -42,7 +42,7 @@ router.post(
   '/',
   [
     body('name').notEmpty().trim(),
-    body('description').notEmpty().trim(),
+    body('description').optional().trim(),
     body('required_skills').isArray(),
     body('priority').isIn(['low', 'medium', 'high', 'critical']),
     body('status').isIn(['planning', 'active', 'on-hold', 'completed']),
@@ -57,7 +57,7 @@ router.post(
       const { id, name, description, required_skills, priority, status, start_date, end_date } = req.body;
       const result = await pool.query(
         'INSERT INTO projects (id, name, description, required_skills, priority, status, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-        [id, name, description, required_skills, priority, status, start_date || null, end_date || null]
+        [id, name, description || '', required_skills, priority, status, start_date || null, end_date || null]
       );
       res.status(201).json(result.rows[0]);
     } catch (error) {
