@@ -6,7 +6,7 @@ import { Search, User, Calendar, Award, TrendingUp } from 'lucide-react';
 
 const AvailabilityFinder: React.FC = () => {
   const { developers, allocations, projects } = useData();
-  const [requiredBandwidth, setRequiredBandwidth] = useState(50);
+  const [requiredBandwidth, setRequiredBandwidth] = useState<50 | 100>(50);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [showResults, setShowResults] = useState(false);
 
@@ -46,22 +46,32 @@ const AvailabilityFinder: React.FC = () => {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Required Bandwidth: {requiredBandwidth}%
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Required Bandwidth
             </label>
-            <input
-              type="range"
-              min="10"
-              max="100"
-              step="10"
-              value={requiredBandwidth}
-              onChange={(e) => setRequiredBandwidth(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>10%</span>
-              <span>50%</span>
-              <span>100%</span>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="requiredBandwidth"
+                  value="50"
+                  checked={requiredBandwidth === 50}
+                  onChange={() => setRequiredBandwidth(50)}
+                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700">50% (Half-time)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="requiredBandwidth"
+                  value="100"
+                  checked={requiredBandwidth === 100}
+                  onChange={() => setRequiredBandwidth(100)}
+                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700">100% (Full-time)</span>
+              </label>
             </div>
           </div>
 

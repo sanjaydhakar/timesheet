@@ -46,7 +46,7 @@ const ManageData: React.FC = () => {
   const [allocationForm, setAllocationForm] = useState({
     developerId: '',
     projectId: '',
-    bandwidth: '50',
+    bandwidth: 50 as 50 | 100,
     startDate: formatDateInput(new Date()),
     endDate: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
     notes: '',
@@ -96,7 +96,7 @@ const ManageData: React.FC = () => {
       setAllocationForm({
         developerId: allocation.developerId,
         projectId: allocation.projectId,
-        bandwidth: allocation.bandwidth.toString(),
+        bandwidth: allocation.bandwidth as 50 | 100,
         startDate: formatDateInput(allocation.startDate),
         endDate: formatDateInput(allocation.endDate),
         notes: allocation.notes || '',
@@ -106,7 +106,7 @@ const ManageData: React.FC = () => {
       setAllocationForm({
         developerId: developers[0]?.id || '',
         projectId: projects[0]?.id || '',
-        bandwidth: '50',
+        bandwidth: 50,
         startDate: formatDateInput(new Date()),
         endDate: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
         notes: '',
@@ -162,7 +162,7 @@ const ManageData: React.FC = () => {
     const allocationData = {
       developerId: allocationForm.developerId,
       projectId: allocationForm.projectId,
-      bandwidth: Number(allocationForm.bandwidth),
+      bandwidth: allocationForm.bandwidth,
       startDate: new Date(allocationForm.startDate),
       endDate: new Date(allocationForm.endDate),
       notes: allocationForm.notes,
@@ -575,18 +575,33 @@ const ManageData: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bandwidth: {allocationForm.bandwidth}%
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Bandwidth Allocation
                 </label>
-                <input
-                  type="range"
-                  min="10"
-                  max="100"
-                  step="10"
-                  value={allocationForm.bandwidth}
-                  onChange={(e) => setAllocationForm({ ...allocationForm, bandwidth: e.target.value })}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
-                />
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="bandwidth"
+                      value="50"
+                      checked={allocationForm.bandwidth === 50}
+                      onChange={() => setAllocationForm({ ...allocationForm, bandwidth: 50 })}
+                      className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">50% (Half-time)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="bandwidth"
+                      value="100"
+                      checked={allocationForm.bandwidth === 100}
+                      onChange={() => setAllocationForm({ ...allocationForm, bandwidth: 100 })}
+                      className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">100% (Full-time)</span>
+                  </label>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

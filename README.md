@@ -9,7 +9,7 @@ A comprehensive web application for managing developer resources, project alloca
 - **Project View**: Project-centric view displaying all developers assigned to each project, completion timelines, and resource allocation
 - **Timeline View**: Visual Gantt-chart style display showing all allocations across time with color-coded projects, bandwidth indicators, and interactive tooltips
 - **Many-to-Many Mapping**: Flexible allocation system allowing developers to work on multiple projects simultaneously
-- **Bandwidth Tracking**: Monitor allocation percentages (partial/full) for each developer per project
+- **Bandwidth Tracking**: Simple half-time (50%) or full-time (100%) allocation per project
 - **Timeline Management**: Track start/end dates for all initiatives with visibility into current and future availability
 
 ### Planning & Communication

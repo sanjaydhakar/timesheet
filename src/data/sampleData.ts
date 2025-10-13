@@ -84,15 +84,15 @@ const getDateOffset = (days: number) => {
 };
 
 export const sampleAllocations: Allocation[] = [
-  // Alice on Homepage Redesign (80% for 60 days)
+  // Alice on Homepage Redesign (100% for 60 days)
   {
     id: 'alloc1',
     developerId: 'dev1',
     projectId: 'proj1',
-    bandwidth: 80,
+    bandwidth: 100,
     startDate: getDateOffset(-10),
     endDate: getDateOffset(50),
-    notes: 'Lead developer',
+    notes: 'Lead developer - Full-time',
   },
   // Carol on Homepage Redesign (50% for 60 days)
   {
@@ -102,7 +102,7 @@ export const sampleAllocations: Allocation[] = [
     bandwidth: 50,
     startDate: getDateOffset(-10),
     endDate: getDateOffset(50),
-    notes: 'UI/UX focus',
+    notes: 'UI/UX focus - Half-time',
   },
   // Bob on Mobile App Backend (100% for 90 days)
   {
@@ -112,45 +112,37 @@ export const sampleAllocations: Allocation[] = [
     bandwidth: 100,
     startDate: getDateOffset(-5),
     endDate: getDateOffset(85),
+    notes: 'Backend lead - Full-time',
   },
-  // Carol on Mobile App Backend (30% for 45 days)
+  // Carol on Mobile App Backend (50% for 45 days)
   {
     id: 'alloc4',
     developerId: 'dev3',
     projectId: 'proj2',
-    bandwidth: 30,
+    bandwidth: 50,
     startDate: getDateOffset(0),
     endDate: getDateOffset(45),
-    notes: 'Mobile expertise consultant',
+    notes: 'Mobile expertise consultant - Half-time',
   },
-  // David on User Authentication (70% for 75 days)
+  // David on User Authentication (100% for 75 days)
   {
     id: 'alloc5',
     developerId: 'dev4',
     projectId: 'proj5',
-    bandwidth: 70,
+    bandwidth: 100,
     startDate: getDateOffset(-15),
     endDate: getDateOffset(60),
+    notes: 'Microservices expert - Full-time',
   },
-  // Emma on User Authentication (40% for 75 days)
+  // Emma on User Authentication (50% for 75 days)
   {
     id: 'alloc6',
     developerId: 'dev5',
     projectId: 'proj5',
-    bandwidth: 40,
+    bandwidth: 50,
     startDate: getDateOffset(-15),
     endDate: getDateOffset(60),
-    notes: 'Testing and QA',
-  },
-  // Alice future allocation (20% buffer)
-  {
-    id: 'alloc7',
-    developerId: 'dev1',
-    projectId: 'proj4',
-    bandwidth: 20,
-    startDate: getDateOffset(-10),
-    endDate: getDateOffset(50),
-    notes: 'Code review and mentoring',
+    notes: 'Testing and QA - Half-time',
   },
 ];
 
