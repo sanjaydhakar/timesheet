@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import { DataProvider } from './contexts/DataContext';
+import { DataProvider, useData } from './contexts/DataContext';
 import ResourceView from './components/ResourceView';
 import ProjectView from './components/ProjectView';
 import AvailabilityFinder from './components/AvailabilityFinder';
 import ManageData from './components/ManageData';
 import TimelineView from './components/TimelineView';
+import LoadingState from './components/LoadingState';
+import ErrorState from './components/ErrorState';
 import { Users, Briefcase, Search, Settings, Menu, Calendar } from 'lucide-react';
 
 type ViewType = 'resources' | 'projects' | 'timeline' | 'availability' | 'manage';
 
-function App() {
+function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('resources');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { loading, error, refreshData } = useData();
 
   const navigationItems = [
     { id: 'resources' as ViewType, label: 'Resource View', icon: Users },
@@ -21,9 +24,16 @@ function App() {
     { id: 'manage' as ViewType, label: 'Manage Data', icon: Settings },
   ];
 
+  if (loading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} onRetry={refreshData} />;
+  }
+
   return (
-    <DataProvider>
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -90,6 +100,13 @@ function App() {
           </div>
         </footer>
       </div>
+  );
+}
+
+function App() {
+  return (
+    <DataProvider>
+      <AppContent />
     </DataProvider>
   );
 }

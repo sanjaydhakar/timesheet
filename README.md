@@ -1,6 +1,6 @@
 # Resource Management Tool
 
-A comprehensive web application for managing developer resources, project allocations, and team planning.
+A comprehensive full-stack web application for managing developer resources, project allocations, and team planning with persistent database storage.
 
 ## Features
 
@@ -27,35 +27,157 @@ A comprehensive web application for managing developer resources, project alloca
 
 ## Technology Stack
 
-- **Frontend**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Date Handling**: date-fns
+### Frontend
+- **React 18** with TypeScript
+- **Vite** - Fast build tool
+- **Tailwind CSS** - Modern styling
+- **Lucide React** - Beautiful icons
+- **date-fns** - Date manipulation
+
+### Backend
+- **Node.js** with Express
+- **TypeScript** - Type safety
+- **PostgreSQL** - Relational database
+- **express-validator** - Input validation
+- **CORS** enabled for frontend communication
 
 ## Getting Started
 
-### Installation
+### Quick Start
 
-1. Install dependencies:
+See [SETUP.md](SETUP.md) for detailed installation instructions.
+
+**TL;DR:**
 ```bash
+# 1. Install PostgreSQL and create database
+createdb resource_management
+
+# 2. Install dependencies
 npm install
+cd server && npm install && cd ..
+
+# 3. Configure environment
+cp server/.env.example server/.env
+# Edit server/.env with your database credentials
+
+# 4. Run migrations and seed data
+cd server
+npm run build
+npm run db:migrate
+npm run db:seed
+
+# 5. Start servers (in separate terminals)
+# Terminal 1 - Backend
+cd server && npm run dev
+
+# Terminal 2 - Frontend
+npm run dev
 ```
 
-2. Start the development server:
+Open http://localhost:5173 in your browser!
+
+### Development Mode
+
+Run both backend and frontend:
+
+**Backend (Terminal 1):**
+```bash
+cd server
+npm run dev
+```
+
+**Frontend (Terminal 2):**
 ```bash
 npm run dev
 ```
 
-3. Open your browser and navigate to `http://localhost:5173`
-
 ### Building for Production
 
+**Backend:**
 ```bash
+cd server
 npm run build
+npm start
 ```
 
-The built files will be in the `dist` directory.
+**Frontend:**
+```bash
+npm run build
+npm run preview
+```
+
+## Project Structure
+
+```
+timesheet-cursor/
+├── src/                          # Frontend source
+│   ├── components/               # React components
+│   │   ├── ResourceView.tsx      # Developer-centric view
+│   │   ├── ProjectView.tsx       # Project-centric view
+│   │   ├── TimelineView.tsx      # Gantt chart timeline
+│   │   ├── AvailabilityFinder.tsx # Resource search
+│   │   ├── ManageData.tsx        # CRUD operations
+│   │   ├── LoadingState.tsx      # Loading indicator
+│   │   └── ErrorState.tsx        # Error display
+│   ├── contexts/
+│   │   └── DataContext.tsx       # State management + API integration
+│   ├── services/
+│   │   └── api.ts                # API client functions
+│   ├── types/
+│   │   └── index.ts              # TypeScript interfaces
+│   ├── utils/
+│   │   ├── calculations.ts       # Business logic
+│   │   └── dateUtils.ts          # Date helpers
+│   ├── App.tsx                   # Main app component
+│   └── main.tsx                  # Entry point
+├── server/                       # Backend source
+│   ├── src/
+│   │   ├── routes/               # API routes
+│   │   │   ├── developers.ts     # Developer endpoints
+│   │   │   ├── projects.ts       # Project endpoints
+│   │   │   └── allocations.ts    # Allocation endpoints
+│   │   ├── config/
+│   │   │   └── database.ts       # PostgreSQL connection
+│   │   ├── database/
+│   │   │   ├── schema.sql        # Database schema
+│   │   │   ├── migrate.ts        # Migration script
+│   │   │   └── seed.ts           # Seed data script
+│   │   └── server.ts             # Express server
+│   ├── package.json
+│   └── tsconfig.json
+├── SETUP.md                      # Detailed setup guide
+├── README.md                     # This file
+└── package.json
+```
+
+## API Documentation
+
+### Base URL
+```
+http://localhost:3001/api
+```
+
+### Endpoints
+
+**Developers:**
+- `GET /developers` - Get all developers
+- `POST /developers` - Create developer
+- `PUT /developers/:id` - Update developer
+- `DELETE /developers/:id` - Delete developer
+
+**Projects:**
+- `GET /projects` - Get all projects
+- `POST /projects` - Create project
+- `PUT /projects/:id` - Update project
+- `DELETE /projects/:id` - Delete project
+
+**Allocations:**
+- `GET /allocations` - Get all allocations
+- `POST /allocations` - Create allocation
+- `PUT /allocations/:id` - Update allocation
+- `DELETE /allocations/:id` - Delete allocation
+
+See [SETUP.md](SETUP.md) for complete API documentation.
 
 ## Usage Guide
 
@@ -81,7 +203,7 @@ The built files will be in the `dist` directory.
 - See overlapping allocations and availability at a glance
 
 ### Find Resources
-- Specify required bandwidth percentage
+- Specify required bandwidth (50% or 100%)
 - Select required skills
 - Get a ranked list of available developers based on:
   - Skill match percentage
@@ -94,12 +216,23 @@ Three management tabs:
 2. **Projects**: Manage project details, priorities, and required skills
 3. **Allocations**: Create and manage developer-to-project assignments with bandwidth and date ranges
 
-## Sample Data
+## Database Schema
 
-The application comes pre-loaded with sample data:
-- 5 developers with various skill sets
-- 5 projects at different stages
-- Multiple allocations demonstrating various scenarios
+### Developers
+- Stores developer information with skills array
+- Unique email constraint
+- Cascade delete for allocations
+
+### Projects
+- Project details with priority and status
+- Array of required skills
+- Cascade delete for allocations
+
+### Allocations
+- Many-to-many relationship between developers and projects
+- Bandwidth: 50% or 100% only
+- Date range validation
+- Notes field for additional context
 
 ## Use Cases
 
@@ -108,18 +241,37 @@ The application comes pre-loaded with sample data:
 3. **Skill Matching**: Find developers with specific expertise for specialized tasks
 4. **Timeline Estimation**: Use project view to understand when current initiatives will complete
 5. **Team Rebalancing**: Identify overallocated developers and redistribute work
+6. **Visual Timeline**: See all allocations at a glance with the Gantt-chart view
 
-## Customization
+## Troubleshooting
 
-The tool is designed to be flexible and can be extended with:
-- Backend integration for data persistence
-- User authentication
-- Export/import capabilities
-- Calendar integrations
-- Notification systems
+### Backend won't start
+- Ensure PostgreSQL is running
+- Check database credentials in `server/.env`
+- Verify port 3001 is available
+
+### Frontend shows connection error
+- Ensure backend server is running
+- Check `VITE_API_URL` in `.env`
+- Verify CORS is enabled
+
+### Database errors
+- Run migrations: `cd server && npm run db:migrate`
+- Check PostgreSQL logs
+- Verify user permissions
+
+See [SETUP.md](SETUP.md) for detailed troubleshooting.
+
+## Future Enhancements
+
+- User authentication and authorization
+- Export data to CSV/Excel
+- Calendar integrations (Google Calendar, Outlook)
+- Email notifications for allocation changes
 - Advanced analytics and reporting
+- Mobile app
+- Real-time collaboration
 
 ## License
 
 MIT
-
