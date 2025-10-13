@@ -4,9 +4,10 @@ import ResourceView from './components/ResourceView';
 import ProjectView from './components/ProjectView';
 import AvailabilityFinder from './components/AvailabilityFinder';
 import ManageData from './components/ManageData';
-import { Users, Briefcase, Search, Settings, Menu } from 'lucide-react';
+import TimelineView from './components/TimelineView';
+import { Users, Briefcase, Search, Settings, Menu, Calendar } from 'lucide-react';
 
-type ViewType = 'resources' | 'projects' | 'availability' | 'manage';
+type ViewType = 'resources' | 'projects' | 'timeline' | 'availability' | 'manage';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('resources');
@@ -15,6 +16,7 @@ function App() {
   const navigationItems = [
     { id: 'resources' as ViewType, label: 'Resource View', icon: Users },
     { id: 'projects' as ViewType, label: 'Project View', icon: Briefcase },
+    { id: 'timeline' as ViewType, label: 'Timeline View', icon: Calendar },
     { id: 'availability' as ViewType, label: 'Find Resources', icon: Search },
     { id: 'manage' as ViewType, label: 'Manage Data', icon: Settings },
   ];
@@ -73,6 +75,7 @@ function App() {
           <main>
             {currentView === 'resources' && <ResourceView />}
             {currentView === 'projects' && <ProjectView />}
+            {currentView === 'timeline' && <TimelineView />}
             {currentView === 'availability' && <AvailabilityFinder />}
             {currentView === 'manage' && <ManageData />}
           </main>
