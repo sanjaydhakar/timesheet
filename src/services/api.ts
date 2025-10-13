@@ -53,30 +53,76 @@ export const developersApi = {
 export const projectsApi = {
   getAll: async (): Promise<Project[]> => {
     const response = await fetch(`${API_BASE_URL}/projects`);
-    return handleResponse<Project[]>(response);
+    const data = await handleResponse<any[]>(response);
+    // Transform snake_case to camelCase
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      requiredSkills: item.required_skills || [],
+      priority: item.priority,
+      status: item.status,
+    }));
   },
 
   getById: async (id: string): Promise<Project> => {
     const response = await fetch(`${API_BASE_URL}/projects/${id}`);
-    return handleResponse<Project>(response);
+    const data = await handleResponse<any>(response);
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      requiredSkills: data.required_skills || [],
+      priority: data.priority,
+      status: data.status,
+    };
   },
 
   create: async (project: Project): Promise<Project> => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(project),
+      body: JSON.stringify({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        required_skills: project.requiredSkills,
+        priority: project.priority,
+        status: project.status,
+      }),
     });
-    return handleResponse<Project>(response);
+    const data = await handleResponse<any>(response);
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      requiredSkills: data.required_skills || [],
+      priority: data.priority,
+      status: data.status,
+    };
   },
 
   update: async (id: string, project: Partial<Project>): Promise<Project> => {
     const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(project),
+      body: JSON.stringify({
+        name: project.name,
+        description: project.description,
+        required_skills: project.requiredSkills,
+        priority: project.priority,
+        status: project.status,
+      }),
     });
-    return handleResponse<Project>(response);
+    const data = await handleResponse<any>(response);
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      requiredSkills: data.required_skills || [],
+      priority: data.priority,
+      status: data.status,
+    };
   },
 
   delete: async (id: string): Promise<void> => {
