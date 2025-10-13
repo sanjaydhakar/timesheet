@@ -1,12 +1,23 @@
 import { Allocation, Developer, Project } from '../types';
-import { isAfter, isBefore } from 'date-fns';
+import { isAfter, isBefore, isSameDay, startOfDay } from 'date-fns';
 import { getTodayStart } from './dateUtils';
 
 export const calculateCurrentBandwidth = (allocations: Allocation[]): number => {
   const today = getTodayStart();
   
   return allocations
-    .filter(a => isBefore(a.startDate, today) && isAfter(a.endDate, today))
+    .filter(a => {
+      // Normalize dates to start of day for comparison
+      const allocStart = startOfDay(a.startDate);
+      const allocEnd = startOfDay(a.endDate);
+      const todayStart = startOfDay(today);
+      
+      // Allocation is current if:
+      // - starts today or before (allocStart <= today)
+      // - ends today or after (allocEnd >= today)
+      return (isBefore(allocStart, todayStart) || isSameDay(allocStart, todayStart)) &&
+             (isAfter(allocEnd, todayStart) || isSameDay(allocEnd, todayStart));
+    })
     .reduce((sum, a) => sum + a.bandwidth, 0);
 };
 
