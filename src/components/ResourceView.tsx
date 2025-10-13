@@ -1,29 +1,35 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
-import { DeveloperWithAllocations, Developer } from '../types';
+import { DeveloperWithAllocations, Developer, Allocation } from '../types';
 import { calculateCurrentBandwidth } from '../utils/calculations';
-import { formatDate, getTodayStart, getNextAvailableDate } from '../utils/dateUtils';
+import { formatDate, formatDateInput, getTodayStart, getNextAvailableDate } from '../utils/dateUtils';
 import { User, Calendar, TrendingUp, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, Search, X, Trash2, Upload } from 'lucide-react';
 import { isAfter, isBefore } from 'date-fns';
 import BulkAddDevelopers from './BulkAddDevelopers';
 
-interface ResourceViewProps {
-  onAddAllocation?: (developerId: string) => void;
-}
-
-const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
-  const { developers, projects, allocations, addDeveloper, updateDeveloper, deleteDeveloper } = useData();
+const ResourceView: React.FC = () => {
+  const { developers, projects, allocations, addDeveloper, updateDeveloper, deleteDeveloper, addAllocation, updateAllocation, deleteAllocation } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'name' | 'bandwidth' | 'availability'>('bandwidth');
-  const [showModal, setShowModal] = useState(false);
+  const [showDeveloperModal, setShowDeveloperModal] = useState(false);
+  const [showAllocationModal, setShowAllocationModal] = useState(false);
   const [editingDeveloper, setEditingDeveloper] = useState<Developer | null>(null);
+  const [editingAllocation, setEditingAllocation] = useState<Allocation | null>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [developerForm, setDeveloperForm] = useState({
     name: '',
     email: '',
     skills: '',
+  });
+  const [allocationForm, setAllocationForm] = useState({
+    developerId: '',
+    projectId: '',
+    bandwidth: 100 as 50 | 100,
+    startDate: formatDateInput(new Date()),
+    endDate: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+    notes: '',
   });
 
   const developersWithAllocations: DeveloperWithAllocations[] = useMemo(() => {
@@ -99,25 +105,47 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
     setExpandedRows(newExpanded);
   };
 
-  const openAddModal = () => {
+  const openAddDeveloperModal = () => {
     setEditingDeveloper(null);
     setDeveloperForm({ name: '', email: '', skills: '' });
-    setShowModal(true);
+    setShowDeveloperModal(true);
   };
 
-  const openEditModal = (developer: Developer) => {
+  const openEditDeveloperModal = (developer: Developer) => {
     setEditingDeveloper(developer);
     setDeveloperForm({
       name: developer.name,
       email: developer.email,
       skills: developer.skills.join(', '),
     });
-    setShowModal(true);
+    setShowDeveloperModal(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
+  const closeDeveloperModal = () => {
+    setShowDeveloperModal(false);
     setEditingDeveloper(null);
+  };
+
+  const openAddAllocationModal = (developerId: string) => {
+    const firstProjectId = projects[0]?.id || '';
+    const firstProject = projects.find(p => p.id === firstProjectId);
+    setEditingAllocation(null);
+    setAllocationForm({
+      developerId: developerId,
+      projectId: firstProjectId,
+      bandwidth: 100,
+      startDate: formatDateInput(new Date()),
+      endDate: firstProject?.endDate 
+        ? formatDateInput(firstProject.endDate)
+        : formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+      notes: '',
+    });
+    setShowAllocationModal(true);
+  };
+
+  const closeAllocationModal = () => {
+    setShowAllocationModal(false);
+    setEditingAllocation(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -138,7 +166,33 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
         skills,
       });
     }
-    closeModal();
+    closeDeveloperModal();
+  };
+
+  const handleAllocationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (editingAllocation) {
+      updateAllocation(editingAllocation.id, {
+        developerId: allocationForm.developerId,
+        projectId: allocationForm.projectId,
+        bandwidth: allocationForm.bandwidth,
+        startDate: new Date(allocationForm.startDate),
+        endDate: new Date(allocationForm.endDate),
+        notes: allocationForm.notes,
+      });
+    } else {
+      addAllocation({
+        id: `alloc${Date.now()}`,
+        developerId: allocationForm.developerId,
+        projectId: allocationForm.projectId,
+        bandwidth: allocationForm.bandwidth,
+        startDate: new Date(allocationForm.startDate),
+        endDate: new Date(allocationForm.endDate),
+        notes: allocationForm.notes,
+      });
+    }
+    closeAllocationModal();
   };
 
   const handleDelete = (developer: Developer) => {
@@ -218,7 +272,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
             Bulk Import
           </button>
           <button
-            onClick={openAddModal}
+            onClick={openAddDeveloperModal}
             className="px-4 py-2 text-sm bg-gradient-primary text-white hover:shadow-lg rounded-lg transition-all flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -329,14 +383,14 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => openEditModal(developer)}
+                            onClick={() => openEditDeveloperModal(developer)}
                             className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
                             title="Edit developer"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => onAddAllocation?.(developer.id)}
+                            onClick={() => openAddAllocationModal(developer.id)}
                             className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                             title="Add allocation"
                           >
@@ -442,7 +496,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
       </div>
 
       {/* Developer Modal */}
-      {showModal && (
+      {showDeveloperModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -451,7 +505,7 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
                 {editingDeveloper ? 'Edit Developer' : 'Add Developer'}
               </h3>
               <button
-                onClick={closeModal}
+                onClick={closeDeveloperModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-6 h-6" />
@@ -506,7 +560,154 @@ const ResourceView: React.FC<ResourceViewProps> = ({ onAddAllocation }) => {
                 </button>
                 <button
                   type="button"
-                  onClick={closeModal}
+                  onClick={closeDeveloperModal}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Allocation Modal */}
+      {showAllocationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Calendar className="w-6 h-6 text-primary-600" />
+                {editingAllocation ? 'Edit Allocation' : 'Add Allocation'}
+              </h3>
+              <button
+                onClick={closeAllocationModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleAllocationSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Developer *
+                </label>
+                <select
+                  required
+                  value={allocationForm.developerId}
+                  onChange={(e) => setAllocationForm({ ...allocationForm, developerId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Select a developer</option>
+                  {developers.map(dev => (
+                    <option key={dev.id} value={dev.id}>
+                      {dev.name} - {dev.skills.join(', ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Project *
+                </label>
+                <select
+                  required
+                  value={allocationForm.projectId}
+                  onChange={(e) => {
+                    const project = projects.find(p => p.id === e.target.value);
+                    setAllocationForm({ 
+                      ...allocationForm, 
+                      projectId: e.target.value,
+                      endDate: project?.endDate 
+                        ? formatDateInput(project.endDate)
+                        : allocationForm.endDate
+                    });
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Select a project</option>
+                  {projects.map(proj => (
+                    <option key={proj.id} value={proj.id}>
+                      {proj.name} ({proj.status})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bandwidth *
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="50"
+                      checked={allocationForm.bandwidth === 50}
+                      onChange={() => setAllocationForm({ ...allocationForm, bandwidth: 50 })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">Half-time (50%)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="100"
+                      checked={allocationForm.bandwidth === 100}
+                      onChange={() => setAllocationForm({ ...allocationForm, bandwidth: 100 })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">Full-time (100%)</span>
+                  </label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={allocationForm.startDate}
+                    onChange={(e) => setAllocationForm({ ...allocationForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={allocationForm.endDate}
+                    onChange={(e) => setAllocationForm({ ...allocationForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={allocationForm.notes}
+                  onChange={(e) => setAllocationForm({ ...allocationForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  rows={3}
+                  placeholder="Any additional notes..."
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-primary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all"
+                >
+                  {editingAllocation ? 'Update Allocation' : 'Add Allocation'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeAllocationModal}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel

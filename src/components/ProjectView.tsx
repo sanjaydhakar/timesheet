@@ -1,22 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
-import { ProjectWithAllocations, Project } from '../types';
+import { ProjectWithAllocations, Project, Allocation } from '../types';
 import { formatDate, formatDateInput, getTodayStart } from '../utils/dateUtils';
 import { Briefcase, Users, Calendar, AlertCircle, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, TrendingUp, X, Trash2 } from 'lucide-react';
 import { isAfter } from 'date-fns';
 
-interface ProjectViewProps {
-  onAddAllocation?: (projectId: string) => void;
-}
-
-const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
-  const { projects, developers, allocations, addProject, updateProject, deleteProject } = useData();
+const ProjectView: React.FC = () => {
+  const { projects, developers, allocations, addProject, updateProject, deleteProject, addAllocation, updateAllocation, deleteAllocation } = useData();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'name' | 'priority' | 'resources'>('priority');
-  const [showModal, setShowModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showAllocationModal, setShowAllocationModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editingAllocation, setEditingAllocation] = useState<Allocation | null>(null);
   const [projectForm, setProjectForm] = useState({
     name: '',
     description: '',
@@ -26,6 +24,14 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
     startDate: '',
     endDate: '',
     devsNeeded: '',
+  });
+  const [allocationForm, setAllocationForm] = useState({
+    developerId: '',
+    projectId: '',
+    bandwidth: 100 as 50 | 100,
+    startDate: formatDateInput(new Date()),
+    endDate: formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+    notes: '',
   });
 
   const projectsWithAllocations: ProjectWithAllocations[] = useMemo(() => {
@@ -109,7 +115,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
     setExpandedRows(newExpanded);
   };
 
-  const openAddModal = () => {
+  const openAddProjectModal = () => {
     setEditingProject(null);
     setProjectForm({
       name: '',
@@ -121,10 +127,10 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
       endDate: '',
       devsNeeded: '',
     });
-    setShowModal(true);
+    setShowProjectModal(true);
   };
 
-  const openEditModal = (project: Project) => {
+  const openEditProjectModal = (project: Project) => {
     setEditingProject(project);
     setProjectForm({
       name: project.name,
@@ -136,15 +142,36 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
       endDate: project.endDate ? formatDateInput(project.endDate) : '',
       devsNeeded: project.devsNeeded ? String(project.devsNeeded) : '',
     });
-    setShowModal(true);
+    setShowProjectModal(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
+  const closeProjectModal = () => {
+    setShowProjectModal(false);
     setEditingProject(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const openAddAllocationModal = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    setEditingAllocation(null);
+    setAllocationForm({
+      developerId: developers[0]?.id || '',
+      projectId: projectId,
+      bandwidth: 100,
+      startDate: formatDateInput(new Date()),
+      endDate: project?.endDate 
+        ? formatDateInput(project.endDate)
+        : formatDateInput(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+      notes: '',
+    });
+    setShowAllocationModal(true);
+  };
+
+  const closeAllocationModal = () => {
+    setShowAllocationModal(false);
+    setEditingAllocation(null);
+  };
+
+  const handleProjectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const requiredSkills = projectForm.requiredSkills.split(',').map(s => s.trim()).filter(s => s);
     
@@ -167,7 +194,39 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
         ...projectData,
       } as Project);
     }
-    closeModal();
+    closeProjectModal();
+  };
+
+  const handleAllocationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (editingAllocation) {
+      updateAllocation(editingAllocation.id, {
+        developerId: allocationForm.developerId,
+        projectId: allocationForm.projectId,
+        bandwidth: allocationForm.bandwidth,
+        startDate: new Date(allocationForm.startDate),
+        endDate: new Date(allocationForm.endDate),
+        notes: allocationForm.notes,
+      });
+    } else {
+      addAllocation({
+        id: `alloc${Date.now()}`,
+        developerId: allocationForm.developerId,
+        projectId: allocationForm.projectId,
+        bandwidth: allocationForm.bandwidth,
+        startDate: new Date(allocationForm.startDate),
+        endDate: new Date(allocationForm.endDate),
+        notes: allocationForm.notes,
+      });
+    }
+    closeAllocationModal();
+  };
+
+  const handleDeleteAllocation = (allocation: Allocation) => {
+    if (window.confirm('Are you sure you want to delete this allocation?')) {
+      deleteAllocation(allocation.id);
+    }
   };
 
   const handleDelete = (project: Project) => {
@@ -249,7 +308,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
             <option value="name">Sort by Name</option>
           </select>
           <button
-            onClick={openAddModal}
+            onClick={openAddProjectModal}
             className="px-4 py-2 text-sm bg-gradient-primary text-white hover:shadow-lg rounded-lg transition-all flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -359,14 +418,14 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => openEditModal(project)}
+                            onClick={() => openEditProjectModal(project)}
                             className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
                             title="Edit project"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => onAddAllocation?.(project.id)}
+                            onClick={() => openAddAllocationModal(project.id)}
                             className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                             title="Add allocation"
                           >
@@ -503,7 +562,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
       </div>
 
       {/* Project Modal */}
-      {showModal && (
+      {showProjectModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -512,13 +571,13 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
                 {editingProject ? 'Edit Project' : 'Add Project'}
               </h3>
               <button
-                onClick={closeModal}
+                onClick={closeProjectModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleProjectSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Name *
@@ -635,7 +694,154 @@ const ProjectView: React.FC<ProjectViewProps> = ({ onAddAllocation }) => {
                 </button>
                 <button
                   type="button"
-                  onClick={closeModal}
+                  onClick={closeProjectModal}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Allocation Modal */}
+      {showAllocationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Calendar className="w-6 h-6 text-primary-600" />
+                {editingAllocation ? 'Edit Allocation' : 'Add Allocation'}
+              </h3>
+              <button
+                onClick={closeAllocationModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleAllocationSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Developer *
+                </label>
+                <select
+                  required
+                  value={allocationForm.developerId}
+                  onChange={(e) => setAllocationForm({ ...allocationForm, developerId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Select a developer</option>
+                  {developers.map(dev => (
+                    <option key={dev.id} value={dev.id}>
+                      {dev.name} - {dev.skills.join(', ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Project *
+                </label>
+                <select
+                  required
+                  value={allocationForm.projectId}
+                  onChange={(e) => {
+                    const project = projects.find(p => p.id === e.target.value);
+                    setAllocationForm({ 
+                      ...allocationForm, 
+                      projectId: e.target.value,
+                      endDate: project?.endDate 
+                        ? formatDateInput(project.endDate)
+                        : allocationForm.endDate
+                    });
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">Select a project</option>
+                  {projects.map(proj => (
+                    <option key={proj.id} value={proj.id}>
+                      {proj.name} ({proj.status})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bandwidth *
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="50"
+                      checked={allocationForm.bandwidth === 50}
+                      onChange={() => setAllocationForm({ ...allocationForm, bandwidth: 50 })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">Half-time (50%)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="100"
+                      checked={allocationForm.bandwidth === 100}
+                      onChange={() => setAllocationForm({ ...allocationForm, bandwidth: 100 })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">Full-time (100%)</span>
+                  </label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={allocationForm.startDate}
+                    onChange={(e) => setAllocationForm({ ...allocationForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={allocationForm.endDate}
+                    onChange={(e) => setAllocationForm({ ...allocationForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={allocationForm.notes}
+                  onChange={(e) => setAllocationForm({ ...allocationForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  rows={3}
+                  placeholder="Any additional notes..."
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-primary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all"
+                >
+                  {editingAllocation ? 'Update Allocation' : 'Add Allocation'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeAllocationModal}
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
