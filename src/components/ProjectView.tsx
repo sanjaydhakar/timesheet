@@ -6,7 +6,7 @@ import { Briefcase, Users, Calendar, ChevronDown, ChevronRight, Edit2, Eye, Plus
 import { isAfter } from 'date-fns';
 
 const ProjectView: React.FC = () => {
-  const { projects, developers, allocations, addProject, updateProject, deleteProject, addAllocation, updateAllocation, deleteAllocation } = useData();
+  const { projects, developers, allocations, addProject, updateProject, deleteProject, addAllocation, updateAllocation } = useData();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
