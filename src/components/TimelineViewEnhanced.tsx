@@ -663,29 +663,36 @@ const TimelineViewEnhanced: React.FC = () => {
 
                         {/* Allocation bars */}
                         <div className="absolute inset-0 p-2 pointer-events-auto">
-                          {timelineBars.map((bar, barIndex) => (
-                            <div
-                              key={`${bar.allocation.id}-${barIndex}`}
-                              className={`absolute ${projectColors[bar.project.id]} rounded-lg shadow-md group cursor-pointer hover:opacity-100 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 border-2 border-white/20`}
-                              style={{
-                                left: `${bar.startPos}%`,
-                                width: `${bar.width}%`,
-                                top: `${(barIndex * 32) + 6}px`,
-                                height: '24px',
-                                opacity: 0.95,
-                              }}
-                              title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditAllocation(bar.allocation);
-                              }}
-                            >
-                              <div className="h-full flex items-center justify-between px-2 text-white text-[10px] font-semibold">
-                                <span className="truncate">{bar.project.name}</span>
-                                <span className="ml-1 px-1 py-0.5 bg-white/20 rounded text-[9px] flex-shrink-0">{bar.allocation.bandwidth}%</span>
+                          {timelineBars.map((bar, barIndex) => {
+                            const barHeight = bar.allocation.bandwidth === 50 ? 12 : 24;
+                            const topOffset = bar.allocation.bandwidth === 50 
+                              ? (barIndex * 32) + 12 // Center 50% bars
+                              : (barIndex * 32) + 6;
+                            
+                            return (
+                              <div
+                                key={`${bar.allocation.id}-${barIndex}`}
+                                className={`absolute ${projectColors[bar.project.id]} rounded-lg shadow-md group cursor-pointer hover:opacity-100 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 border-2 border-white/20`}
+                                style={{
+                                  left: `${bar.startPos}%`,
+                                  width: `${bar.width}%`,
+                                  top: `${topOffset}px`,
+                                  height: `${barHeight}px`,
+                                  opacity: 0.95,
+                                }}
+                                title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditAllocation(bar.allocation);
+                                }}
+                              >
+                                <div className="h-full flex items-center justify-between px-2 text-white text-[10px] font-semibold">
+                                  <span className="truncate">{bar.project.name}</span>
+                                  <span className="ml-1 px-1 py-0.5 bg-white/20 rounded text-[9px] flex-shrink-0">{bar.allocation.bandwidth}%</span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -775,29 +782,36 @@ const TimelineViewEnhanced: React.FC = () => {
 
                         {/* Allocation bars (showing developers) */}
                         <div className="absolute inset-0 p-1 pointer-events-auto">
-                          {timelineBars.map((bar, barIndex) => (
-                            <div
-                              key={`${bar.allocation.id}-${barIndex}`}
-                              className={`absolute ${projectColors[project.id]} rounded shadow-sm group cursor-pointer hover:opacity-100 hover:shadow-lg transition-all`}
-                              style={{
-                                left: `${bar.startPos}%`,
-                                width: `${bar.width}%`,
-                                top: `${(barIndex * 28) + 4}px`,
-                                height: '20px',
-                                opacity: 0.9,
-                              }}
-                              title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditAllocation(bar.allocation);
-                              }}
-                            >
-                              <div className="h-full flex items-center px-2 text-white text-[10px] font-medium truncate">
-                                <span className="truncate">{bar.project.name}</span>
-                                <span className="ml-1 flex-shrink-0">({bar.allocation.bandwidth}%)</span>
+                          {timelineBars.map((bar, barIndex) => {
+                            const barHeight = bar.allocation.bandwidth === 50 ? 10 : 20;
+                            const topOffset = bar.allocation.bandwidth === 50 
+                              ? (barIndex * 28) + 9 // Center 50% bars
+                              : (barIndex * 28) + 4;
+                            
+                            return (
+                              <div
+                                key={`${bar.allocation.id}-${barIndex}`}
+                                className={`absolute ${projectColors[project.id]} rounded shadow-sm group cursor-pointer hover:opacity-100 hover:shadow-lg transition-all`}
+                                style={{
+                                  left: `${bar.startPos}%`,
+                                  width: `${bar.width}%`,
+                                  top: `${topOffset}px`,
+                                  height: `${barHeight}px`,
+                                  opacity: 0.9,
+                                }}
+                                title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditAllocation(bar.allocation);
+                                }}
+                              >
+                                <div className="h-full flex items-center px-2 text-white text-[10px] font-medium truncate">
+                                  <span className="truncate">{bar.project.name}</span>
+                                  <span className="ml-1 flex-shrink-0">({bar.allocation.bandwidth}%)</span>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
