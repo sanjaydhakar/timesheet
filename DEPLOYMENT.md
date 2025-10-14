@@ -2,6 +2,15 @@
 
 This guide explains how to deploy the Resource Management Tool to a VM or server.
 
+## ⚠️ IMPORTANT: Network Connectivity Required
+
+**The automated deployment script requires internet access on the target VM** to:
+- Download Node.js from NodeSource
+- Install npm packages (PM2, dependencies)
+- Access the npm registry
+
+**If your VM does not have internet access**, see **Option 3: Offline Deployment** below.
+
 ## 📋 Prerequisites
 
 ### Server Requirements
@@ -10,6 +19,7 @@ This guide explains how to deploy the Resource Management Tool to a VM or server
 - **Storage**: Minimum 10GB free space
 - **CPU**: 2 cores recommended
 - **Network**: Public IP or domain name
+- **Internet Access**: Required for automated deployment (see offline option if not available)
 
 ### Local Requirements
 - SSH access to the server
@@ -49,6 +59,55 @@ This guide explains how to deploy the Resource Management Tool to a VM or server
 ### Option 2: Manual Deployment
 
 See detailed steps below for manual deployment.
+
+### Option 3: Offline Deployment (No Internet on VM)
+
+If your VM doesn't have internet access, use this method:
+
+**Step 1: On a machine WITH internet (your local machine)**
+```bash
+# Make the preparation script executable
+chmod +x deploy-offline-prepare.sh
+
+# Run the script to create offline package
+./deploy-offline-prepare.sh
+```
+
+This will create a `.tar.gz` file containing everything needed.
+
+**Step 2: Transfer to VM**
+```bash
+# Using SCP
+scp resource-management-offline-*.tar.gz user@your-vm-ip:/tmp/
+
+# Or use USB drive, FTP, or any available transfer method
+```
+
+**Step 3: On the VM**
+```bash
+# Extract package
+cd /tmp
+tar xzf resource-management-offline-*.tar.gz
+cd resource-management-offline-*/
+
+# Run installation script
+sudo bash install.sh
+```
+
+**Step 4: Follow post-installation steps**
+
+The install script will show you the remaining steps:
+1. Install PostgreSQL (if not already installed)
+2. Setup database
+3. Configure environment variables
+4. Run migrations
+5. Start the application
+
+**Note**: PostgreSQL installation still requires internet. If you can't install it online, you'll need to download the .deb packages separately and transfer them, or use a local package repository.
+
+See `TROUBLESHOOTING.md` section "Network Connectivity Issues" for more details.
+
+---
 
 ## 🔧 Manual Deployment Steps
 

@@ -2,6 +2,226 @@
 
 ## Common Deployment Issues
 
+### 0. Network Connectivity Issues (CRITICAL)
+
+**Error:**
+```bash
+npm ERR! code ETIMEDOUT
+npm ERR! syscall connect
+npm ERR! errno ETIMEDOUT
+npm ERR! network request to https://registry.npmjs.org/pm2 failed
+npm ERR! network This is a problem related to network connectivity.
+```
+
+**This is the most critical issue - the deployment script requires internet access.**
+
+#### Immediate Checks:
+
+**1. Test basic connectivity:**
+```bash
+# Test internet connection
+ping -c 3 8.8.8.8
+
+# Test DNS resolution
+ping -c 3 google.com
+
+# Test npm registry
+curl -I https://registry.npmjs.org
+
+# Test NodeSource
+curl -I https://deb.nodesource.com
+```
+
+**2. Check firewall rules:**
+```bash
+# Check if UFW is blocking
+sudo ufw status
+
+# Check iptables
+sudo iptables -L
+
+# Temporarily disable UFW (for testing only)
+sudo ufw disable
+```
+
+**3. Check proxy settings:**
+```bash
+# Check environment proxy
+echo $HTTP_PROXY
+echo $HTTPS_PROXY
+echo $NO_PROXY
+
+# Check npm proxy config
+npm config get proxy
+npm config get https-proxy
+```
+
+#### Solutions:
+
+**Option A: Fix Network Connectivity (RECOMMENDED)**
+
+If you're behind a corporate proxy:
+```bash
+# Set npm proxy
+npm config set proxy http://proxy.company.com:8080
+npm config set https-proxy http://proxy.company.com:8080
+
+# Or with authentication
+npm config set proxy http://username:password@proxy.company.com:8080
+npm config set https-proxy http://username:password@proxy.company.com:8080
+
+# Set no-proxy for local addresses
+npm config set no-proxy localhost,127.0.0.1
+```
+
+If your VM has restricted outbound access:
+- Contact your network administrator to allow outbound HTTPS (443) to:
+  - `registry.npmjs.org`
+  - `deb.nodesource.com`
+  - `github.com` (if using git)
+  - `raw.githubusercontent.com`
+
+**Option B: Manual Offline Deployment**
+
+If network access cannot be enabled, you'll need to prepare packages offline:
+
+**Step 1: On a machine WITH internet access:**
+```bash
+# Create deployment package directory
+mkdir offline-deploy
+cd offline-deploy
+
+# Download Node.js binary (adjust for your OS/architecture)
+wget https://nodejs.org/dist/v18.19.0/node-v18.19.0-linux-x64.tar.xz
+
+# Download your application dependencies
+git clone https://github.com/your-repo/timesheet-cursor.git
+cd timesheet-cursor
+
+# Install and package dependencies
+npm install
+tar czf node_modules.tar.gz node_modules/
+
+cd server
+npm install
+tar czf node_modules.tar.gz node_modules/
+
+# Package everything
+cd ../..
+tar czf deployment-package.tar.gz timesheet-cursor/
+```
+
+**Step 2: Transfer to VM (using SCP, USB, or other means):**
+```bash
+# From your local machine
+scp deployment-package.tar.gz user@your-vm-ip:/home/user/
+```
+
+**Step 3: On the VM (manual installation):**
+```bash
+# Extract package
+tar xzf deployment-package.tar.gz
+cd timesheet-cursor
+
+# Install Node.js manually
+cd /tmp
+tar xf node-v18.19.0-linux-x64.tar.xz
+sudo mv node-v18.19.0-linux-x64 /usr/local/node
+echo 'export PATH=/usr/local/node/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify
+node --version
+npm --version
+
+# Install PM2 globally (from cache if available)
+npm install -g pm2
+
+# Setup PostgreSQL (if not already installed)
+sudo apt-get install postgresql postgresql-contrib
+
+# Setup the application
+cd /path/to/timesheet-cursor
+# node_modules should already be extracted
+
+# Setup database
+sudo -u postgres psql << EOF
+CREATE DATABASE resource_management;
+CREATE USER rmuser WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE resource_management TO rmuser;
+EOF
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Run migrations
+cd server
+npm run build
+npm run db:migrate
+
+# Start with PM2
+pm2 start dist/server.js --name resource-management
+pm2 save
+pm2 startup
+
+# Setup Nginx manually
+# (copy nginx config from DEPLOYMENT.md)
+```
+
+**Option C: Use Different Package Registry**
+
+If npm registry is blocked but you have access to other mirrors:
+```bash
+# Use a different registry (e.g., Alibaba mirror in China)
+npm config set registry https://registry.npmmirror.com
+
+# Or Yarn registry
+npm config set registry https://registry.yarnpkg.com
+
+# Reset to default
+npm config set registry https://registry.npmjs.org
+```
+
+**Option D: Docker Deployment (if Docker is available)**
+
+Create a `Dockerfile` and build the image on a machine with internet, then transfer:
+```bash
+# On machine with internet
+docker build -t resource-management .
+docker save resource-management > resource-management.tar
+
+# Transfer to VM
+scp resource-management.tar user@vm:/tmp/
+
+# On VM
+docker load < /tmp/resource-management.tar
+docker run -d -p 3001:3001 resource-management
+```
+
+#### Debug Network Issues:
+
+```bash
+# Check if specific ports are blocked
+nc -zv registry.npmjs.org 443
+
+# Test with verbose curl
+curl -v https://registry.npmjs.org/pm2
+
+# Check DNS resolution
+nslookup registry.npmjs.org
+
+# Check routing
+traceroute registry.npmjs.org
+
+# Check if SELinux is blocking (RHEL/CentOS)
+getenforce
+# If enforcing, try:
+sudo setenforce 0
+```
+
+---
+
 ### 1. Node.js Installation Fails
 
 **Error:**
