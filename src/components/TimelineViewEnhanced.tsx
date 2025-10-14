@@ -743,7 +743,10 @@ const TimelineViewEnhanced: React.FC = () => {
                         </div>
                       </div>
                       <div 
-                        className="flex-1 relative h-16 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
+                        className="flex-1 relative border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
+                        style={{
+                          height: `${Math.max(64, timelineBars.length * 16 + 8)}px`
+                        }}
                         onMouseDown={(e) => handleMouseDown(e, project.id, 'project')}
                       >
                         {/* Month dividers */}
@@ -783,10 +786,11 @@ const TimelineViewEnhanced: React.FC = () => {
                         {/* Allocation bars (showing developers) */}
                         <div className="absolute inset-0 p-1 pointer-events-auto">
                           {timelineBars.map((bar, barIndex) => {
-                            const barHeight = bar.allocation.bandwidth === 50 ? 10 : 20;
+                            const barHeight = bar.allocation.bandwidth === 50 ? 10 : 14;
+                            const spacing = 16; // Tighter spacing between bars
                             const topOffset = bar.allocation.bandwidth === 50 
-                              ? (barIndex * 28) + 9 // Center 50% bars
-                              : (barIndex * 28) + 4;
+                              ? (barIndex * spacing) + (spacing - barHeight) / 2 + 2 // Center 50% bars
+                              : (barIndex * spacing) + 2;
                             
                             return (
                               <div
