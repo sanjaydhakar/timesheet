@@ -558,8 +558,8 @@ const TimelineViewEnhanced: React.FC = () => {
           <div className="min-w-[800px]">
             {/* Header */}
             <div className="flex border-b-2 border-gray-100 bg-gradient-to-b from-gray-50 to-white">
-              <div className="w-56 flex-shrink-0 px-4 py-4 font-semibold text-gray-800 border-r border-gray-200 flex items-center">
-                <span className="text-sm uppercase tracking-wide">
+              <div className="w-52 flex-shrink-0 px-3 py-2 font-semibold text-gray-800 border-r border-gray-200 flex items-center">
+                <span className="text-xs uppercase tracking-wide">
                   {viewMode === 'resource' ? 'Team Member' : 'Project'}
                 </span>
               </div>
@@ -582,10 +582,10 @@ const TimelineViewEnhanced: React.FC = () => {
                         width: `${monthWidth}%`,
                       }}
                     >
-                      <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">
                         {format(month, 'MMM')}
                       </span>
-                      <span className="text-xs text-gray-500 mt-0.5">
+                      <span className="text-[10px] text-gray-500">
                         {format(month, 'yyyy')}
                       </span>
                     </div>
@@ -620,26 +620,26 @@ const TimelineViewEnhanced: React.FC = () => {
                         devIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                       }`}
                     >
-                      <div className="w-56 flex-shrink-0 px-4 py-4 border-r border-gray-200">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
-                            <User className="w-5 h-5 text-white" />
+                      <div className="w-52 flex-shrink-0 px-3 py-2 border-r border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <User className="w-3.5 h-3.5 text-white" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-gray-900 text-sm truncate">
+                            <div className="font-semibold text-gray-900 text-xs truncate">
                               {developer.name}
                             </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${statusColor}`}>
                                 {totalBandwidth}%
                               </span>
-                              {isOverloaded && <span className="text-xs text-red-600 font-medium">Overloaded!</span>}
+                              {isOverloaded && <span className="text-[10px] text-red-600 font-medium">⚠</span>}
                             </div>
                           </div>
                         </div>
                       </div>
                       <div 
-                        className="flex-1 relative h-24 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
+                        className="flex-1 relative h-16 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
                         onMouseDown={(e) => handleMouseDown(e, developer.id, 'developer')}
                       >
                         {/* Week dividers - subtle grid */}
@@ -695,9 +695,9 @@ const TimelineViewEnhanced: React.FC = () => {
                                 handleEditAllocation(bar.allocation);
                               }}
                             >
-                              <div className="h-full flex items-center justify-between px-3 text-white text-xs font-semibold">
+                              <div className="h-full flex items-center justify-between px-2 text-white text-[10px] font-semibold">
                                 <span className="truncate">{bar.project.name}</span>
-                                <span className="ml-2 px-1.5 py-0.5 bg-white/20 rounded text-[10px] flex-shrink-0">{bar.allocation.bandwidth}%</span>
+                                <span className="ml-1 px-1 py-0.5 bg-white/20 rounded text-[9px] flex-shrink-0">{bar.allocation.bandwidth}%</span>
                               </div>
                             </div>
                           ))}
@@ -730,20 +730,20 @@ const TimelineViewEnhanced: React.FC = () => {
                         projIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                       }`}
                     >
-                      <div className="w-56 flex-shrink-0 px-4 py-4 border-r border-gray-200">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 ${projectColors[project.id]} rounded-full flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                            <Briefcase className="w-5 h-5 text-white" />
+                      <div className="w-52 flex-shrink-0 px-3 py-2 border-r border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-7 h-7 ${projectColors[project.id]} rounded-full flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                            <Briefcase className="w-3.5 h-3.5 text-white" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-gray-900 text-sm truncate">
+                            <div className="font-semibold text-gray-900 text-xs truncate">
                               {project.name}
                             </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${priorityColors[project.priority]}`}>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${priorityColors[project.priority]}`}>
                                 {project.priority}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-[10px] text-gray-500">
                                 {activeDevelopers} dev{activeDevelopers !== 1 ? 's' : ''}
                               </span>
                             </div>
@@ -751,7 +751,7 @@ const TimelineViewEnhanced: React.FC = () => {
                         </div>
                       </div>
                       <div 
-                        className="flex-1 relative h-24 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
+                        className="flex-1 relative h-16 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
                         onMouseDown={(e) => handleMouseDown(e, project.id, 'project')}
                       >
                         {/* Month dividers */}
@@ -807,7 +807,7 @@ const TimelineViewEnhanced: React.FC = () => {
                                 handleEditAllocation(bar.allocation);
                               }}
                             >
-                              <div className="h-full flex items-center px-2 text-white text-xs font-medium truncate">
+                              <div className="h-full flex items-center px-2 text-white text-[10px] font-medium truncate">
                                 <span className="truncate">{bar.project.name}</span>
                                 <span className="ml-1 flex-shrink-0">({bar.allocation.bandwidth}%)</span>
                               </div>
