@@ -1,14 +1,19 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import pool from '../config/database';
 import { body, validationResult } from 'express-validator';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+// All routes require authentication
+router.use(authenticateToken);
+
 // GET all allocations
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM allocations ORDER BY start_date ASC'
+      'SELECT * FROM allocations WHERE user_id = $1 ORDER BY start_date ASC',
+      [req.userId]
     );
     
     // Convert date strings to Date objects for consistency with frontend
@@ -26,12 +31,12 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET allocations by developer
-router.get('/developer/:developerId', async (req: Request, res: Response) => {
+router.get('/developer/:developerId', async (req: AuthRequest, res: Response) => {
   try {
     const { developerId } = req.params;
     const result = await pool.query(
-      'SELECT * FROM allocations WHERE developer_id = $1 ORDER BY start_date ASC',
-      [developerId]
+      'SELECT * FROM allocations WHERE developer_id = $1 AND user_id = $2 ORDER BY start_date ASC',
+      [developerId, req.userId]
     );
     
     const allocations = result.rows.map(row => ({
@@ -48,12 +53,12 @@ router.get('/developer/:developerId', async (req: Request, res: Response) => {
 });
 
 // GET allocations by project
-router.get('/project/:projectId', async (req: Request, res: Response) => {
+router.get('/project/:projectId', async (req: AuthRequest, res: Response) => {
   try {
     const { projectId } = req.params;
     const result = await pool.query(
-      'SELECT * FROM allocations WHERE project_id = $1 ORDER BY start_date ASC',
-      [projectId]
+      'SELECT * FROM allocations WHERE project_id = $1 AND user_id = $2 ORDER BY start_date ASC',
+      [projectId, req.userId]
     );
     
     const allocations = result.rows.map(row => ({
@@ -79,7 +84,7 @@ router.post(
     body('start_date').isISO8601(),
     body('end_date').isISO8601(),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -94,8 +99,8 @@ router.post(
       }
       
       const result = await pool.query(
-        'INSERT INTO allocations (id, developer_id, project_id, bandwidth, start_date, end_date, notes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-        [id, developer_id, project_id, bandwidth, start_date, end_date, notes || null]
+        'INSERT INTO allocations (id, developer_id, project_id, bandwidth, start_date, end_date, notes, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+        [id, developer_id, project_id, bandwidth, start_date, end_date, notes || null, req.userId]
       );
       
       const allocation = {
@@ -125,7 +130,7 @@ router.put(
     body('start_date').optional().isISO8601(),
     body('end_date').optional().isISO8601(),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -143,9 +148,9 @@ router.put(
              start_date = COALESCE($4, start_date),
              end_date = COALESCE($5, end_date),
              notes = COALESCE($6, notes)
-         WHERE id = $7
+         WHERE id = $7 AND user_id = $8
          RETURNING *`,
-        [developer_id, project_id, bandwidth, start_date, end_date, notes, id]
+        [developer_id, project_id, bandwidth, start_date, end_date, notes, id, req.userId]
       );
       
       if (result.rows.length === 0) {
@@ -167,12 +172,12 @@ router.put(
 );
 
 // DELETE allocation
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'DELETE FROM allocations WHERE id = $1 RETURNING *',
-      [id]
+      'DELETE FROM allocations WHERE id = $1 AND user_id = $2 RETURNING *',
+      [id, req.userId]
     );
     
     if (result.rows.length === 0) {

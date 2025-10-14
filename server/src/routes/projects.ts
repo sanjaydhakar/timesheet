@@ -1,14 +1,19 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import pool from '../config/database';
 import { body, validationResult } from 'express-validator';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+// All routes require authentication
+router.use(authenticateToken);
+
 // GET all projects
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM projects ORDER BY priority DESC, name ASC'
+      'SELECT * FROM projects WHERE user_id = $1 ORDER BY priority DESC, name ASC',
+      [req.userId]
     );
     res.json(result.rows);
   } catch (error) {
@@ -18,12 +23,12 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET single project by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'SELECT * FROM projects WHERE id = $1',
-      [id]
+      'SELECT * FROM projects WHERE id = $1 AND user_id = $2',
+      [id, req.userId]
     );
     
     if (result.rows.length === 0) {
@@ -48,7 +53,7 @@ router.post(
     body('status').isIn(['planning', 'active', 'on-hold', 'completed']),
     body('devs_needed').optional().isInt({ min: 1 }),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -57,8 +62,8 @@ router.post(
     try {
       const { id, name, description, required_skills, priority, status, start_date, end_date, devs_needed } = req.body;
       const result = await pool.query(
-        'INSERT INTO projects (id, name, description, required_skills, priority, status, start_date, end_date, devs_needed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-        [id, name, description || '', required_skills, priority, status, start_date || null, end_date || null, devs_needed || null]
+        'INSERT INTO projects (id, name, description, required_skills, priority, status, start_date, end_date, devs_needed, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+        [id, name, description || '', required_skills, priority, status, start_date || null, end_date || null, devs_needed || null, req.userId]
       );
       res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -79,7 +84,7 @@ router.put(
     body('status').optional().isIn(['planning', 'active', 'on-hold', 'completed']),
     body('devs_needed').optional().isInt({ min: 1 }),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -99,9 +104,9 @@ router.put(
              start_date = COALESCE($6, start_date),
              end_date = COALESCE($7, end_date),
              devs_needed = COALESCE($8, devs_needed)
-         WHERE id = $9
+         WHERE id = $9 AND user_id = $10
          RETURNING *`,
-        [name, description, required_skills, priority, status, start_date, end_date, devs_needed, id]
+        [name, description, required_skills, priority, status, start_date, end_date, devs_needed, id, req.userId]
       );
       
       if (result.rows.length === 0) {
@@ -117,12 +122,12 @@ router.put(
 );
 
 // DELETE project
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'DELETE FROM projects WHERE id = $1 RETURNING *',
-      [id]
+      'DELETE FROM projects WHERE id = $1 AND user_id = $2 RETURNING *',
+      [id, req.userId]
     );
     
     if (result.rows.length === 0) {

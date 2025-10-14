@@ -1,14 +1,19 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import pool from '../config/database';
 import { body, validationResult } from 'express-validator';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+// All routes require authentication
+router.use(authenticateToken);
+
 // GET all developers
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: AuthRequest, res: Response) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM developers ORDER BY name ASC'
+      'SELECT * FROM developers WHERE user_id = $1 ORDER BY name ASC',
+      [req.userId]
     );
     res.json(result.rows);
   } catch (error) {
@@ -18,12 +23,12 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET single developer by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'SELECT * FROM developers WHERE id = $1',
-      [id]
+      'SELECT * FROM developers WHERE id = $1 AND user_id = $2',
+      [id, req.userId]
     );
     
     if (result.rows.length === 0) {
@@ -45,7 +50,7 @@ router.post(
     body('email').isEmail().normalizeEmail(),
     body('skills').isArray(),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -54,8 +59,8 @@ router.post(
     try {
       const { id, name, email, skills, avatar } = req.body;
       const result = await pool.query(
-        'INSERT INTO developers (id, name, email, skills, avatar) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [id, name, email, skills, avatar || null]
+        'INSERT INTO developers (id, name, email, skills, avatar, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [id, name, email, skills, avatar || null, req.userId]
       );
       res.status(201).json(result.rows[0]);
     } catch (error: any) {
@@ -76,7 +81,7 @@ router.put(
     body('email').optional().isEmail().normalizeEmail(),
     body('skills').optional().isArray(),
   ],
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -92,9 +97,9 @@ router.put(
              email = COALESCE($2, email),
              skills = COALESCE($3, skills),
              avatar = COALESCE($4, avatar)
-         WHERE id = $5
+         WHERE id = $5 AND user_id = $6
          RETURNING *`,
-        [name, email, skills, avatar, id]
+        [name, email, skills, avatar, id, req.userId]
       );
       
       if (result.rows.length === 0) {
@@ -110,12 +115,12 @@ router.put(
 );
 
 // DELETE developer
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'DELETE FROM developers WHERE id = $1 RETURNING *',
-      [id]
+      'DELETE FROM developers WHERE id = $1 AND user_id = $2 RETURNING *',
+      [id, req.userId]
     );
     
     if (result.rows.length === 0) {

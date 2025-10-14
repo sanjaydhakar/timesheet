@@ -2,6 +2,20 @@ import { Developer, Project, Allocation } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
+// Helper function to get auth headers
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('auth_token');
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
+
 // Helper function to handle API responses
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -14,19 +28,23 @@ async function handleResponse<T>(response: Response): Promise<T> {
 // Developers API
 export const developersApi = {
   getAll: async (): Promise<Developer[]> => {
-    const response = await fetch(`${API_BASE_URL}/developers`);
+    const response = await fetch(`${API_BASE_URL}/developers`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<Developer[]>(response);
   },
 
   getById: async (id: string): Promise<Developer> => {
-    const response = await fetch(`${API_BASE_URL}/developers/${id}`);
+    const response = await fetch(`${API_BASE_URL}/developers/${id}`, {
+      headers: getAuthHeaders(),
+    });
     return handleResponse<Developer>(response);
   },
 
   create: async (developer: Developer): Promise<Developer> => {
     const response = await fetch(`${API_BASE_URL}/developers`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(developer),
     });
     return handleResponse<Developer>(response);
@@ -35,7 +53,7 @@ export const developersApi = {
   update: async (id: string, developer: Partial<Developer>): Promise<Developer> => {
     const response = await fetch(`${API_BASE_URL}/developers/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(developer),
     });
     return handleResponse<Developer>(response);
@@ -44,6 +62,7 @@ export const developersApi = {
   delete: async (id: string): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/developers/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     await handleResponse(response);
   },
@@ -52,7 +71,9 @@ export const developersApi = {
 // Projects API
 export const projectsApi = {
   getAll: async (): Promise<Project[]> => {
-    const response = await fetch(`${API_BASE_URL}/projects`);
+    const response = await fetch(`${API_BASE_URL}/projects`, {
+      headers: getAuthHeaders(),
+    });
     const data = await handleResponse<any[]>(response);
     // Transform snake_case to camelCase
     return data.map(item => ({
@@ -69,7 +90,9 @@ export const projectsApi = {
   },
 
   getById: async (id: string): Promise<Project> => {
-    const response = await fetch(`${API_BASE_URL}/projects/${id}`);
+    const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
+      headers: getAuthHeaders(),
+    });
     const data = await handleResponse<any>(response);
     return {
       id: data.id,
@@ -87,7 +110,7 @@ export const projectsApi = {
   create: async (project: Project): Promise<Project> => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         id: project.id,
         name: project.name,
@@ -117,7 +140,7 @@ export const projectsApi = {
   update: async (id: string, project: Partial<Project>): Promise<Project> => {
     const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         name: project.name,
         description: project.description,
@@ -146,6 +169,7 @@ export const projectsApi = {
   delete: async (id: string): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     await handleResponse(response);
   },
@@ -154,7 +178,9 @@ export const projectsApi = {
 // Allocations API
 export const allocationsApi = {
   getAll: async (): Promise<Allocation[]> => {
-    const response = await fetch(`${API_BASE_URL}/allocations`);
+    const response = await fetch(`${API_BASE_URL}/allocations`, {
+      headers: getAuthHeaders(),
+    });
     const data = await handleResponse<any[]>(response);
     // Convert date strings to Date objects
     return data.map(item => ({
@@ -167,7 +193,9 @@ export const allocationsApi = {
   },
 
   getByDeveloper: async (developerId: string): Promise<Allocation[]> => {
-    const response = await fetch(`${API_BASE_URL}/allocations/developer/${developerId}`);
+    const response = await fetch(`${API_BASE_URL}/allocations/developer/${developerId}`, {
+      headers: getAuthHeaders(),
+    });
     const data = await handleResponse<any[]>(response);
     return data.map(item => ({
       ...item,
@@ -179,7 +207,9 @@ export const allocationsApi = {
   },
 
   getByProject: async (projectId: string): Promise<Allocation[]> => {
-    const response = await fetch(`${API_BASE_URL}/allocations/project/${projectId}`);
+    const response = await fetch(`${API_BASE_URL}/allocations/project/${projectId}`, {
+      headers: getAuthHeaders(),
+    });
     const data = await handleResponse<any[]>(response);
     return data.map(item => ({
       ...item,
@@ -193,7 +223,7 @@ export const allocationsApi = {
   create: async (allocation: Allocation): Promise<Allocation> => {
     const response = await fetch(`${API_BASE_URL}/allocations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         id: allocation.id,
         developer_id: allocation.developerId,
@@ -217,7 +247,7 @@ export const allocationsApi = {
   update: async (id: string, allocation: Partial<Allocation>): Promise<Allocation> => {
     const response = await fetch(`${API_BASE_URL}/allocations/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         developer_id: allocation.developerId,
         project_id: allocation.projectId,
@@ -240,6 +270,7 @@ export const allocationsApi = {
   delete: async (id: string): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/allocations/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     await handleResponse(response);
   },

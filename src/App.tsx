@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
+import Login from './components/Login';
+import Register from './components/Register';
 import ResourceView from './components/ResourceView';
 import ProjectView from './components/ProjectView';
 import AvailabilityFinder from './components/AvailabilityFinder';
 import TimelineView from './components/TimelineViewEnhanced';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
-import { Users, Briefcase, Search, Menu, Calendar, X, BarChart3 } from 'lucide-react';
+import { Users, Briefcase, Search, Menu, Calendar, X, BarChart3, LogOut } from 'lucide-react';
 
 type ViewType = 'resources' | 'projects' | 'timeline' | 'availability';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('timeline');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, logout } = useAuth();
   const { loading, error, refreshData } = useData();
 
   const navigationItems = [
@@ -161,6 +165,19 @@ function AppContent() {
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm text-gray-700 font-medium">Live</span>
               </div>
+              <div className="flex items-center gap-3 px-4 py-2 bg-white/70 rounded-lg border border-gray-200/50">
+                <div className="text-right hidden md:block">
+                  <div className="text-sm font-semibold text-gray-900">{user?.name}</div>
+                  <div className="text-xs text-gray-600">{user?.email}</div>
+                </div>
+                <button
+                  onClick={logout}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -179,12 +196,40 @@ function AppContent() {
   );
 }
 
-function App() {
+function AuthenticatedApp() {
   return (
     <DataProvider>
       <AppContent />
     </DataProvider>
   );
+}
+
+function App() {
+  const [showRegister, setShowRegister] = useState(false);
+  
+  return (
+    <AuthProvider>
+      <AuthContent showRegister={showRegister} setShowRegister={setShowRegister} />
+    </AuthProvider>
+  );
+}
+
+function AuthContent({ showRegister, setShowRegister }: { showRegister: boolean; setShowRegister: (value: boolean) => void }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (!user) {
+    return showRegister ? (
+      <Register onSwitchToLogin={() => setShowRegister(false)} />
+    ) : (
+      <Login onSwitchToRegister={() => setShowRegister(true)} />
+    );
+  }
+
+  return <AuthenticatedApp />;
 }
 
 export default App;
