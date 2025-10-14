@@ -45,6 +45,12 @@ const ProjectView: React.FC = () => {
 
       const totalBandwidth = projAllocations.reduce((sum, a) => sum + a.bandwidth, 0);
       
+      // Normalize bandwidth based on devs needed (if specified)
+      // E.g., if 2 devs needed (200% capacity) and 1 dev at 100% allocated, show 50%
+      const normalizedBandwidth = project.devsNeeded 
+        ? Math.round((totalBandwidth / (project.devsNeeded * 100)) * 100)
+        : totalBandwidth;
+      
       const activeDates = projAllocations
         .filter(a => isAfter(a.endDate, getTodayStart()))
         .map(a => a.endDate);
@@ -56,7 +62,7 @@ const ProjectView: React.FC = () => {
       return {
         ...project,
         allocations: projAllocations,
-        totalBandwidth,
+        totalBandwidth: normalizedBandwidth,
         estimatedCompletion,
       };
     });
@@ -399,7 +405,20 @@ const ProjectView: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
-                        <div className="text-sm font-medium text-gray-900">{project.totalBandwidth}%</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-900">{project.totalBandwidth}%</div>
+                          {project.devsNeeded && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              project.totalBandwidth < 100 ? 'bg-yellow-100 text-yellow-700' :
+                              project.totalBandwidth === 100 ? 'bg-green-100 text-green-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {project.totalBandwidth < 100 ? 'Under' :
+                               project.totalBandwidth === 100 ? 'Full' :
+                               'Over'}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
                         {project.estimatedCompletion ? (
