@@ -52,7 +52,7 @@ echo -e "${GREEN}Copying application files...${NC}"
 cd ..
 mkdir -p "${DEPLOY_DIR}/app"
 
-# Copy all necessary files except node_modules
+# Copy all necessary files except node_modules and deployment directories
 rsync -av --progress \
     --exclude='node_modules' \
     --exclude='.git' \
@@ -60,6 +60,7 @@ rsync -av --progress \
     --exclude='build' \
     --exclude='.env' \
     --exclude='*.log' \
+    --exclude='resource-management-offline-*' \
     ./ "${DEPLOY_DIR}/app/"
 
 cd "${DEPLOY_DIR}/app"
