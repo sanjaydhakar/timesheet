@@ -49,6 +49,10 @@ print_info "Installing Node.js ${NODE_VERSION}..."
 curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
 apt-get install -y nodejs
 
+# Verify installation
+node --version
+npm --version
+
 # Step 3: Install PostgreSQL
 print_info "Installing PostgreSQL..."
 apt-get install -y postgresql postgresql-contrib
