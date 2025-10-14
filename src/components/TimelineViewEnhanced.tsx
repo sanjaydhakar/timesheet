@@ -735,8 +735,17 @@ const TimelineViewEnhanced: React.FC = () => {
                               <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${priorityColors[project.priority]}`}>
                                 {project.priority}
                               </span>
-                              <span className="text-[10px] text-gray-500">
-                                {activeDevelopers} dev{activeDevelopers !== 1 ? 's' : ''}
+                              <span className={`text-[10px] ${
+                                project.devsNeeded 
+                                  ? (activeDevelopers < project.devsNeeded ? 'text-yellow-600' : 
+                                     activeDevelopers === project.devsNeeded ? 'text-green-600' : 
+                                     'text-red-600')
+                                  : 'text-gray-500'
+                              }`}>
+                                {project.devsNeeded 
+                                  ? `${activeDevelopers}/${project.devsNeeded} dev${project.devsNeeded !== 1 ? 's' : ''}`
+                                  : `${activeDevelopers} dev${activeDevelopers !== 1 ? 's' : ''}`
+                                }
                               </span>
                             </div>
                           </div>
