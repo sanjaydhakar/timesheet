@@ -35,18 +35,18 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen flex bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex lg:flex-col w-72 glass border-r border-gray-200/50 backdrop-blur-xl">
+      <aside className="hidden lg:flex lg:flex-col w-72 glass-dark border-r border-white/10 backdrop-blur-xl">
         <div className="flex-1 flex flex-col min-h-0">
           {/* Logo */}
-          <div className="flex items-center gap-3 h-20 px-6 border-b border-gray-200/50">
+          <div className="flex items-center gap-3 h-20 px-6 border-b border-white/10">
             <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
               <BarChart3 className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold gradient-text">Resource Hub</h1>
-              <p className="text-xs text-gray-600">Team Planning Tool</p>
+              <h1 className="text-xl font-bold text-white">Resource Hub</h1>
+              <p className="text-xs text-gray-400">Team Planning Tool</p>
             </div>
           </div>
 
@@ -59,15 +59,15 @@ function AppContent() {
                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-all duration-300 group ${
                   currentView === id
                     ? 'bg-gradient-primary text-white shadow-lg shadow-primary-500/30 scale-[1.02]'
-                    : 'text-gray-700 hover:bg-white/70 hover:shadow-md'
+                    : 'text-gray-300 hover:bg-white/10 hover:shadow-md'
                 }`}
               >
                 <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${
-                  currentView === id ? 'text-white' : 'text-primary-600'
+                  currentView === id ? 'text-white' : 'text-primary-400'
                 }`} />
                 <div className="flex-1 text-left">
                   <div className="text-sm font-semibold">{label}</div>
-                  <div className={`text-xs ${currentView === id ? 'text-white/80' : 'text-gray-500'}`}>
+                  <div className={`text-xs ${currentView === id ? 'text-white/80' : 'text-gray-400'}`}>
                     {description}
                   </div>
                 </div>
@@ -76,10 +76,10 @@ function AppContent() {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200/50">
-            <div className="bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl p-4">
-              <p className="text-xs text-gray-700 font-medium mb-1">💡 Pro Tip</p>
-              <p className="text-xs text-gray-600">Drag on timeline to quickly add allocations</p>
+          <div className="p-4 border-t border-white/10">
+            <div className="bg-gradient-to-r from-primary-900/30 to-purple-900/30 rounded-xl p-4 border border-primary-500/20">
+              <p className="text-xs text-primary-300 font-medium mb-1">💡 Pro Tip</p>
+              <p className="text-xs text-gray-400">Drag on timeline to quickly add allocations</p>
             </div>
           </div>
         </div>
@@ -141,38 +141,38 @@ function AppContent() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="glass border-b border-gray-200/50 backdrop-blur-xl sticky top-0 z-40">
+        <header className="glass-dark border-b border-white/10 backdrop-blur-xl sticky top-0 z-40">
           <div className="flex items-center justify-between h-20 px-6">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 text-gray-600 hover:bg-white/70 rounded-lg transition-colors"
+                className="lg:hidden p-2 text-gray-300 hover:bg-white/10 rounded-lg transition-colors"
               >
                 <Menu className="w-6 h-6" />
               </button>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-white">
                   {navigationItems.find(item => item.id === currentView)?.label || 'Dashboard'}
                 </h2>
-                <p className="text-sm text-gray-600 mt-0.5">
+                <p className="text-sm text-gray-400 mt-0.5">
                   {navigationItems.find(item => item.id === currentView)?.description}
                 </p>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/70 rounded-lg border border-gray-200/50">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-700 font-medium">Live</span>
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg border border-white/10">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-300 font-medium">Live</span>
               </div>
-              <div className="flex items-center gap-3 px-4 py-2 bg-white/70 rounded-lg border border-gray-200/50">
+              <div className="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-lg border border-white/10">
                 <div className="text-right hidden md:block">
-                  <div className="text-sm font-semibold text-gray-900">{user?.name}</div>
-                  <div className="text-xs text-gray-600">{user?.email}</div>
+                  <div className="text-sm font-semibold text-white">{user?.name}</div>
+                  <div className="text-xs text-gray-400">{user?.email}</div>
                 </div>
                 <button
                   onClick={logout}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                   title="Logout"
                 >
                   <LogOut className="w-5 h-5" />
