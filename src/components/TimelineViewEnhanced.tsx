@@ -537,21 +537,6 @@ const TimelineViewEnhanced: React.FC = () => {
         </div>
       </div>
 
-      {/* Legend */}
-      {viewMode === 'resource' && (
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Projects</h3>
-          <div className="flex flex-wrap gap-3">
-            {projects.map(project => (
-              <div key={project.id} className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded ${projectColors[project.id]}`}></div>
-                <span className="text-sm text-gray-700">{project.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Timeline */}
       <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-200">
         <div className="overflow-x-auto">
