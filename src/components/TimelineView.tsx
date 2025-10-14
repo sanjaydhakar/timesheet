@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { formatDate, getTodayStart } from '../utils/dateUtils';
 import { Calendar, ChevronLeft, ChevronRight, User } from 'lucide-react';
-import { addDays, addMonths, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval, format, isSameMonth } from 'date-fns';
+import { addDays, differenceInDays, endOfMonth, eachMonthOfInterval, format } from 'date-fns';
 
 interface TimelineBar {
   allocation: any;

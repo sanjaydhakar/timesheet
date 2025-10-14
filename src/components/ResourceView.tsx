@@ -3,12 +3,12 @@ import { useData } from '../contexts/DataContext';
 import { DeveloperWithAllocations, Developer, Allocation } from '../types';
 import { calculateCurrentBandwidth } from '../utils/calculations';
 import { formatDate, formatDateInput, getTodayStart, getNextAvailableDate } from '../utils/dateUtils';
-import { User, Calendar, TrendingUp, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, Search, X, Trash2, Upload } from 'lucide-react';
+import { User, Calendar, TrendingUp, ChevronDown, ChevronRight, Edit2, Eye, Plus, Search, X, Trash2, Upload } from 'lucide-react';
 import { isAfter, isBefore } from 'date-fns';
 import BulkAddDevelopers from './BulkAddDevelopers';
 
 const ResourceView: React.FC = () => {
-  const { developers, projects, allocations, addDeveloper, updateDeveloper, deleteDeveloper, addAllocation, updateAllocation, deleteAllocation } = useData();
+  const { developers, projects, allocations, addDeveloper, updateDeveloper, deleteDeveloper, addAllocation, updateAllocation } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -33,8 +33,6 @@ const ResourceView: React.FC = () => {
   });
 
   const developersWithAllocations: DeveloperWithAllocations[] = useMemo(() => {
-    const today = getTodayStart();
-
     return developers.map(developer => {
       const devAllocations = allocations
         .filter(a => a.developerId === developer.id)

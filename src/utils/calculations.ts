@@ -1,4 +1,4 @@
-import { Allocation, Developer, Project } from '../types';
+import { Allocation, Developer } from '../types';
 import { isAfter, isBefore, isSameDay, startOfDay } from 'date-fns';
 import { getTodayStart } from './dateUtils';
 

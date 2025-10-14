@@ -60,7 +60,7 @@ const BulkAddDevelopers: React.FC<BulkAddDevelopersProps> = ({ onClose }) => {
     const developers = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = [];
+      const values: string[] = [];
       let current = '';
       let inQuotes = false;
 
@@ -83,7 +83,7 @@ const BulkAddDevelopers: React.FC<BulkAddDevelopersProps> = ({ onClose }) => {
           if (header === 'skills') {
             // Parse skills from comma-separated string or quoted string
             const skillsStr = values[index].replace(/^"|"$/g, '');
-            dev.skills = skillsStr.split(',').map(s => s.trim()).filter(s => s);
+            dev.skills = skillsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s);
           } else {
             dev[header] = values[index];
           }
@@ -95,7 +95,7 @@ const BulkAddDevelopers: React.FC<BulkAddDevelopersProps> = ({ onClose }) => {
     return developers;
   };
 
-  const validateDeveloper = (dev: any, index: number): { valid: boolean; error?: string } => {
+  const validateDeveloper = (dev: any): { valid: boolean; error?: string } => {
     if (!dev.name || typeof dev.name !== 'string') {
       return { valid: false, error: 'Name is required and must be a string' };
     }
@@ -140,7 +140,7 @@ const BulkAddDevelopers: React.FC<BulkAddDevelopersProps> = ({ onClose }) => {
 
       for (let i = 0; i < parsedData.length; i++) {
         const dev = parsedData[i];
-        const validation = validateDeveloper(dev, i);
+        const validation = validateDeveloper(dev);
 
         if (!validation.valid) {
           failed.push({

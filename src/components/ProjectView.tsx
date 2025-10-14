@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { ProjectWithAllocations, Project, Allocation } from '../types';
 import { formatDate, formatDateInput, getTodayStart } from '../utils/dateUtils';
-import { Briefcase, Users, Calendar, AlertCircle, Filter, ChevronDown, ChevronRight, Edit2, Eye, Plus, TrendingUp, X, Trash2 } from 'lucide-react';
+import { Briefcase, Users, Calendar, ChevronDown, ChevronRight, Edit2, Eye, Plus, TrendingUp, X, Trash2 } from 'lucide-react';
 import { isAfter } from 'date-fns';
 
 const ProjectView: React.FC = () => {
@@ -15,12 +15,21 @@ const ProjectView: React.FC = () => {
   const [showAllocationModal, setShowAllocationModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingAllocation, setEditingAllocation] = useState<Allocation | null>(null);
-  const [projectForm, setProjectForm] = useState({
+  const [projectForm, setProjectForm] = useState<{
+    name: string;
+    description: string;
+    requiredSkills: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    status: 'planning' | 'active' | 'completed' | 'on-hold';
+    startDate: string;
+    endDate: string;
+    devsNeeded: string;
+  }>({
     name: '',
     description: '',
     requiredSkills: '',
-    priority: 'medium' as const,
-    status: 'planning' as const,
+    priority: 'medium',
+    status: 'planning',
     startDate: '',
     endDate: '',
     devsNeeded: '',
@@ -229,11 +238,12 @@ const ProjectView: React.FC = () => {
     closeAllocationModal();
   };
 
-  const handleDeleteAllocation = (allocation: Allocation) => {
-    if (window.confirm('Are you sure you want to delete this allocation?')) {
-      deleteAllocation(allocation.id);
-    }
-  };
+  // Unused but kept for potential future use
+  // const handleDeleteAllocation = (allocation: Allocation) => {
+  //   if (window.confirm('Are you sure you want to delete this allocation?')) {
+  //     deleteAllocation(allocation.id);
+  //   }
+  // };
 
   const handleDelete = (project: Project) => {
     if (window.confirm(`Are you sure you want to delete ${project.name}? This will also remove all related allocations.`)) {

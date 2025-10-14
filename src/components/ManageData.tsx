@@ -45,12 +45,21 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
   });
 
   // Project form state
-  const [projectForm, setProjectForm] = useState({
+  const [projectForm, setProjectForm] = useState<{
+    name: string;
+    description: string;
+    requiredSkills: string;
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    status: 'planning' | 'active' | 'completed' | 'on-hold';
+    startDate: string;
+    endDate: string;
+    devsNeeded: string;
+  }>({
     name: '',
     description: '',
     requiredSkills: '',
-    priority: 'medium' as const,
-    status: 'planning' as const,
+    priority: 'medium',
+    status: 'planning',
     startDate: '',
     endDate: '',
     devsNeeded: '',

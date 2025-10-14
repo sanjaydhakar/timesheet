@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useData } from '../contexts/DataContext';
 import { formatDate, getTodayStart, formatDateInput } from '../utils/dateUtils';
-import { Calendar, ChevronLeft, ChevronRight, User, Briefcase, X, LayoutGrid, Plus } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, User, Briefcase, X, Plus } from 'lucide-react';
 import { addDays, differenceInDays, eachMonthOfInterval, format } from 'date-fns';
 import { Developer, Project } from '../types';
 
@@ -305,6 +305,7 @@ const TimelineViewEnhanced: React.FC = () => {
       status: 'planning',
       startDate: '',
       endDate: '',
+      devsNeeded: '',
     });
     setShowProjectModal(true);
   };
