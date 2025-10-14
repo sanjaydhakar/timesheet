@@ -29,7 +29,19 @@ cd "${DEPLOY_DIR}"
 
 # Download Node.js
 echo -e "${GREEN}Downloading Node.js ${NODE_VERSION}...${NC}"
-wget "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz"
+
+# Use curl (macOS compatible) or wget (Linux)
+if command -v curl &> /dev/null; then
+    curl -LO "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz"
+elif command -v wget &> /dev/null; then
+    wget "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz"
+else
+    echo -e "${RED}Neither curl nor wget found. Please install one of them:${NC}"
+    echo "macOS: curl should be pre-installed"
+    echo "Linux: sudo apt-get install curl"
+    exit 1
+fi
+
 if [ $? -ne 0 ]; then
     echo -e "${RED}Failed to download Node.js${NC}"
     exit 1
