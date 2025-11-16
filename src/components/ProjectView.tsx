@@ -537,6 +537,12 @@ const ProjectView: React.FC = () => {
                                             <div className="text-gray-500">
                                               {formatDate(allocation.startDate)} → {formatDate(allocation.endDate)}
                                             </div>
+                                            {(allocation.createdByName || allocation.createdAt) && (
+                                              <div className="text-gray-400 text-[10px] mt-1">
+                                                by {allocation.createdByName || 'Unknown'}
+                                                {allocation.createdAt && ` on ${formatDate(allocation.createdAt)}`}
+                                              </div>
+                                            )}
                                           </div>
                                           <div className="flex flex-wrap gap-1">
                                             {allocation.developer.skills.slice(0, 3).map(skill => (

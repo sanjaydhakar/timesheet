@@ -7,16 +7,18 @@ import ResourceView from './components/ResourceView';
 import ProjectView from './components/ProjectView';
 import AvailabilityFinder from './components/AvailabilityFinder';
 import TimelineView from './components/TimelineViewEnhanced';
+import TeamManagement from './components/TeamManagement';
+import TeamSelector from './components/TeamSelector';
 import LoadingState from './components/LoadingState';
 import ErrorState from './components/ErrorState';
-import { Users, Briefcase, Search, Menu, Calendar, X, BarChart3, LogOut } from 'lucide-react';
+import { Users, Briefcase, Search, Menu, Calendar, X, BarChart3, LogOut, Users2 } from 'lucide-react';
 
-type ViewType = 'resources' | 'projects' | 'timeline' | 'availability';
+type ViewType = 'resources' | 'projects' | 'timeline' | 'availability' | 'teams';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('timeline');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, switchTeam } = useAuth();
   const { loading, error, refreshData } = useData();
 
   const navigationItems = [
@@ -24,6 +26,7 @@ function AppContent() {
     { id: 'resources' as ViewType, label: 'Resources', icon: Users, description: 'Team overview' },
     { id: 'projects' as ViewType, label: 'Projects', icon: Briefcase, description: 'Project status' },
     { id: 'availability' as ViewType, label: 'Find Resources', icon: Search, description: 'Smart search' },
+    { id: 'teams' as ViewType, label: 'Teams', icon: Users2, description: 'Team management' },
   ];
 
   if (loading) {
@@ -49,6 +52,17 @@ function AppContent() {
               <p className="text-xs text-gray-400">Team Planning Tool</p>
             </div>
           </div>
+
+          {/* Desktop Team Selector */}
+          {user?.teams && user.teams.length > 1 && (
+            <div className="px-4 py-4 border-b border-white/10">
+              <TeamSelector
+                selectedTeamId={user.currentTeamId}
+                onTeamChange={switchTeam}
+                className="w-full"
+              />
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -109,6 +123,17 @@ function AppContent() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              {/* Mobile Team Selector */}
+              {user?.teams && user.teams.length > 1 && (
+                <div className="px-4 py-4 border-b border-white/10">
+                  <TeamSelector
+                    selectedTeamId={user.currentTeamId}
+                    onTeamChange={switchTeam}
+                    className="w-full"
+                  />
+                </div>
+              )}
 
               {/* Mobile Navigation */}
               <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -185,6 +210,7 @@ function AppContent() {
             {currentView === 'projects' && <ProjectView />}
             {currentView === 'timeline' && <TimelineView />}
             {currentView === 'availability' && <AvailabilityFinder />}
+            {currentView === 'teams' && <TeamManagement />}
           </div>
         </div>
       </main>

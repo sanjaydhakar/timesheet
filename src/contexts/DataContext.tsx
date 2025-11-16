@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Developer, Project, Allocation } from '../types';
 import { developersApi, projectsApi, allocationsApi } from '../services/api';
+import { useAuth } from './AuthContext';
 
 interface DataContextType {
   developers: Developer[];
@@ -23,6 +24,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [allocations, setAllocations] = useState<Allocation[]>([]);
@@ -31,6 +33,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Fetch all data on mount
   const fetchData = async () => {
+    if (!user || !user.currentTeamId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -54,11 +61,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user?.currentTeamId]);
 
   const addDeveloper = async (developer: Developer) => {
     try {
-      const newDev = await developersApi.create(developer);
+      const newDev = await developersApi.create(developer, user?.currentTeamId);
       setDevelopers([...developers, newDev]);
     } catch (err: any) {
       console.error('Error adding developer:', err);
@@ -68,7 +75,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateDeveloper = async (id: string, updatedDeveloper: Partial<Developer>) => {
     try {
-      const updated = await developersApi.update(id, updatedDeveloper);
+      const updated = await developersApi.update(id, updatedDeveloper, user?.currentTeamId);
       setDevelopers(developers.map(dev => 
         dev.id === id ? updated : dev
       ));
@@ -91,7 +98,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addProject = async (project: Project) => {
     try {
-      const newProj = await projectsApi.create(project);
+      const newProj = await projectsApi.create(project, user?.currentTeamId);
       setProjects([...projects, newProj]);
     } catch (err: any) {
       console.error('Error adding project:', err);
@@ -101,7 +108,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateProject = async (id: string, updatedProject: Partial<Project>) => {
     try {
-      const updated = await projectsApi.update(id, updatedProject);
+      const updated = await projectsApi.update(id, updatedProject, user?.currentTeamId);
       setProjects(projects.map(proj => 
         proj.id === id ? updated : proj
       ));
@@ -124,7 +131,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addAllocation = async (allocation: Allocation) => {
     try {
-      const newAlloc = await allocationsApi.create(allocation);
+      const newAlloc = await allocationsApi.create(allocation, user?.currentTeamId);
       setAllocations([...allocations, newAlloc]);
     } catch (err: any) {
       console.error('Error adding allocation:', err);
@@ -134,7 +141,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateAllocation = async (id: string, updatedAllocation: Partial<Allocation>) => {
     try {
-      const updated = await allocationsApi.update(id, updatedAllocation);
+      const updated = await allocationsApi.update(id, updatedAllocation, user?.currentTeamId);
       setAllocations(allocations.map(alloc => 
         alloc.id === id ? updated : alloc
       ));

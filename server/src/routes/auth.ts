@@ -50,6 +50,21 @@ router.post(
 
       const user = result.rows[0];
 
+      // Get user's teams
+      const teamsResult = await pool.query(
+        `SELECT 
+          t.id,
+          t.name,
+          t.description,
+          ut.role,
+          ut.joined_at as "joinedAt"
+        FROM teams t
+        JOIN user_teams ut ON t.id = ut.team_id
+        WHERE ut.user_id = $1
+        ORDER BY ut.joined_at DESC`,
+        [user.id]
+      );
+
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
@@ -61,6 +76,8 @@ router.post(
           id: user.id,
           email: user.email,
           name: user.name,
+          teams: teamsResult.rows,
+          currentTeamId: teamsResult.rows.length > 0 ? teamsResult.rows[0].id : null,
         },
       });
     } catch (error) {
@@ -105,6 +122,21 @@ router.post(
         return res.status(401).json({ error: 'Invalid email or password' });
       }
 
+      // Get user's teams
+      const teamsResult = await pool.query(
+        `SELECT 
+          t.id,
+          t.name,
+          t.description,
+          ut.role,
+          ut.joined_at as "joinedAt"
+        FROM teams t
+        JOIN user_teams ut ON t.id = ut.team_id
+        WHERE ut.user_id = $1
+        ORDER BY ut.joined_at DESC`,
+        [user.id]
+      );
+
       // Generate JWT token
       const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
@@ -116,6 +148,8 @@ router.post(
           id: user.id,
           email: user.email,
           name: user.name,
+          teams: teamsResult.rows,
+          currentTeamId: teamsResult.rows.length > 0 ? teamsResult.rows[0].id : null,
         },
       });
     } catch (error) {
@@ -137,7 +171,27 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(result.rows[0]);
+    const user = result.rows[0];
+
+    // Fetch user's teams
+    const teamsResult = await pool.query(
+      `SELECT t.id, t.name, t.description, ut.role, ut.joined_at as "joinedAt"
+       FROM user_teams ut
+       JOIN teams t ON ut.team_id = t.id
+       WHERE ut.user_id = $1
+       ORDER BY ut.joined_at ASC`,
+      [req.userId]
+    );
+
+    // Get current team from localStorage or default to first team
+    const currentTeamId = req.headers['x-current-team-id'] as string || 
+                         (teamsResult.rows.length > 0 ? teamsResult.rows[0].id : null);
+
+    res.json({
+      ...user,
+      teams: teamsResult.rows,
+      currentTeamId: currentTeamId,
+    });
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });

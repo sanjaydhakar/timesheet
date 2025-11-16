@@ -14,7 +14,8 @@ echo "=========================================="
 # Configuration
 NODE_VERSION="18.19.0"
 PACKAGE_NAME="resource-management-offline"
-DEPLOY_DIR="${PACKAGE_NAME}-$(date +%Y%m%d-%H%M%S)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEPLOY_DIR="${SCRIPT_DIR}/${PACKAGE_NAME}-$(date +%Y%m%d-%H%M%S)"
 
 # Colors
 RED='\033[0;31m'

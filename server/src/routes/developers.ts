@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import pool from '../config/database';
 import { body, validationResult } from 'express-validator';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { getUserTeamIds, buildTeamFilterQuery } from '../utils/teamUtils';
 
 const router = Router();
 
@@ -11,9 +12,25 @@ router.use(authenticateToken);
 // GET all developers
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
+    const teamIds = await getUserTeamIds(req.userId!);
+    const currentTeamId = req.headers['x-current-team-id'] as string;
+    
+    // If current team ID is provided, filter by that team only
+    // Otherwise, filter by all teams the user has access to
+    let teamFilter: string;
+    let queryParams: string[];
+    
+    if (currentTeamId && teamIds.includes(currentTeamId)) {
+      teamFilter = 'team_id = $1';
+      queryParams = [currentTeamId];
+    } else {
+      teamFilter = buildTeamFilterQuery(req.userId!, teamIds);
+      queryParams = teamIds;
+    }
+    
     const result = await pool.query(
-      'SELECT * FROM developers WHERE user_id = $1 ORDER BY name ASC',
-      [req.userId]
+      `SELECT * FROM developers WHERE ${teamFilter} ORDER BY name ASC`,
+      queryParams
     );
     res.json(result.rows);
   } catch (error) {
@@ -26,9 +43,12 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const teamIds = await getUserTeamIds(req.userId!);
+    const teamFilter = buildTeamFilterQuery(req.userId!, teamIds);
+    
     const result = await pool.query(
-      'SELECT * FROM developers WHERE id = $1 AND user_id = $2',
-      [id, req.userId]
+      `SELECT * FROM developers WHERE id = $1 AND ${teamFilter}`,
+      [id, ...teamIds]
     );
     
     if (result.rows.length === 0) {
@@ -49,6 +69,7 @@ router.post(
     body('name').notEmpty().trim(),
     body('email').isEmail().normalizeEmail(),
     body('skills').isArray(),
+    body('teamId').notEmpty().trim(),
   ],
   async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
@@ -57,10 +78,20 @@ router.post(
     }
 
     try {
-      const { id, name, email, skills, avatar } = req.body;
+      const { id, name, email, skills, avatar, teamId } = req.body;
+      
+      // Verify user has access to the team
+      const teamIds = await getUserTeamIds(req.userId!);
+      if (!teamIds.includes(teamId)) {
+        return res.status(403).json({ error: 'Access denied to this team' });
+      }
+      
+      // Generate ID if not provided
+      const developerId = id || `dev_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const result = await pool.query(
-        'INSERT INTO developers (id, name, email, skills, avatar, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [id, name, email, skills, avatar || null, req.userId]
+        'INSERT INTO developers (id, name, email, skills, avatar, team_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [developerId, name, email, skills, avatar || null, teamId]
       );
       res.status(201).json(result.rows[0]);
     } catch (error: any) {
@@ -80,6 +111,7 @@ router.put(
     body('name').optional().notEmpty().trim(),
     body('email').optional().isEmail().normalizeEmail(),
     body('skills').optional().isArray(),
+    body('teamId').optional().notEmpty().trim(),
   ],
   async (req: AuthRequest, res: Response) => {
     const errors = validationResult(req);
@@ -89,17 +121,29 @@ router.put(
 
     try {
       const { id } = req.params;
-      const { name, email, skills, avatar } = req.body;
+      const { name, email, skills, avatar, teamId } = req.body;
+      
+      // If teamId is provided, verify user has access to it
+      if (teamId) {
+        const teamIds = await getUserTeamIds(req.userId!);
+        if (!teamIds.includes(teamId)) {
+          return res.status(403).json({ error: 'Access denied to this team' });
+        }
+      }
+      
+      const teamIds = await getUserTeamIds(req.userId!);
+      const teamFilter = buildTeamFilterQuery(req.userId!, teamIds, 6);
       
       const result = await pool.query(
         `UPDATE developers 
          SET name = COALESCE($1, name),
              email = COALESCE($2, email),
              skills = COALESCE($3, skills),
-             avatar = COALESCE($4, avatar)
-         WHERE id = $5 AND user_id = $6
+             avatar = COALESCE($4, avatar),
+             team_id = COALESCE($5, team_id)
+         WHERE id = $6 AND ${teamFilter}
          RETURNING *`,
-        [name, email, skills, avatar, id, req.userId]
+        [name, email, skills, avatar, teamId, id, ...teamIds]
       );
       
       if (result.rows.length === 0) {
@@ -118,9 +162,12 @@ router.put(
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const teamIds = await getUserTeamIds(req.userId!);
+    const teamFilter = buildTeamFilterQuery(req.userId!, teamIds, 1);
+    
     const result = await pool.query(
-      'DELETE FROM developers WHERE id = $1 AND user_id = $2 RETURNING *',
-      [id, req.userId]
+      `DELETE FROM developers WHERE id = $1 AND ${teamFilter} RETURNING *`,
+      [id, ...teamIds]
     );
     
     if (result.rows.length === 0) {

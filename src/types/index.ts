@@ -1,9 +1,18 @@
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  role: 'admin' | 'member';
+  joinedAt: Date;
+}
+
 export interface Developer {
   id: string;
   name: string;
   email: string;
   skills: string[];
   avatar?: string;
+  teamId?: string;
 }
 
 export interface Project {
@@ -16,6 +25,7 @@ export interface Project {
   startDate?: Date;
   endDate?: Date;
   devsNeeded?: number;
+  teamId?: string;
 }
 
 export interface Allocation {
@@ -26,6 +36,11 @@ export interface Allocation {
   startDate: Date;
   endDate: Date;
   notes?: string;
+  teamId?: string;
+  createdBy?: string;
+  createdByName?: string;
+  createdByEmail?: string;
+  createdAt?: Date;
 }
 
 export interface DeveloperWithAllocations extends Developer {

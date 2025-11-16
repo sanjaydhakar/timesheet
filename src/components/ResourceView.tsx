@@ -447,6 +447,12 @@ const ResourceView: React.FC = () => {
                                             <span className="text-gray-500 flex-shrink-0">
                                               {formatDate(allocation.startDate)} → {formatDate(allocation.endDate)}
                                             </span>
+                                            {(allocation.createdByName || allocation.createdAt) && (
+                                              <span className="text-gray-400 text-[10px] flex-shrink-0">
+                                                by {allocation.createdByName || 'Unknown'}
+                                                {allocation.createdAt && ` (${formatDate(allocation.createdAt)})`}
+                                              </span>
+                                            )}
                                           </div>
                                           <div className="text-primary-600 font-semibold ml-2">
                                             {allocation.bandwidth}%

@@ -1,16 +1,21 @@
 import { Developer, Project, Allocation } from '../types';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Helper function to get auth headers
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('auth_token');
+  const currentTeamId = localStorage.getItem('current_team_id');
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  if (currentTeamId) {
+    headers['x-current-team-id'] = currentTeamId;
   }
   
   return headers;
@@ -41,20 +46,20 @@ export const developersApi = {
     return handleResponse<Developer>(response);
   },
 
-  create: async (developer: Developer): Promise<Developer> => {
+  create: async (developer: Developer, teamId?: string): Promise<Developer> => {
     const response = await fetch(`${API_BASE_URL}/developers`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(developer),
+      body: JSON.stringify({ ...developer, teamId }),
     });
     return handleResponse<Developer>(response);
   },
 
-  update: async (id: string, developer: Partial<Developer>): Promise<Developer> => {
+  update: async (id: string, developer: Partial<Developer>, teamId?: string): Promise<Developer> => {
     const response = await fetch(`${API_BASE_URL}/developers/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify(developer),
+      body: JSON.stringify({ ...developer, teamId }),
     });
     return handleResponse<Developer>(response);
   },
@@ -107,7 +112,7 @@ export const projectsApi = {
     };
   },
 
-  create: async (project: Project): Promise<Project> => {
+  create: async (project: Project, teamId?: string): Promise<Project> => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -121,6 +126,7 @@ export const projectsApi = {
         start_date: project.startDate ? project.startDate.toISOString().split('T')[0] : null,
         end_date: project.endDate ? project.endDate.toISOString().split('T')[0] : null,
         devs_needed: project.devsNeeded,
+        teamId,
       }),
     });
     const data = await handleResponse<any>(response);
@@ -137,7 +143,7 @@ export const projectsApi = {
     };
   },
 
-  update: async (id: string, project: Partial<Project>): Promise<Project> => {
+  update: async (id: string, project: Partial<Project>, teamId?: string): Promise<Project> => {
     const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
@@ -150,6 +156,7 @@ export const projectsApi = {
         start_date: project.startDate ? project.startDate.toISOString().split('T')[0] : null,
         end_date: project.endDate ? project.endDate.toISOString().split('T')[0] : null,
         devs_needed: project.devsNeeded,
+        teamId,
       }),
     });
     const data = await handleResponse<any>(response);
@@ -189,6 +196,10 @@ export const allocationsApi = {
       endDate: new Date(item.end_date),
       developerId: item.developer_id,
       projectId: item.project_id,
+      createdAt: item.created_at ? new Date(item.created_at) : undefined,
+      createdBy: item.created_by,
+      createdByName: item.created_by_name,
+      createdByEmail: item.created_by_email,
     }));
   },
 
@@ -203,6 +214,7 @@ export const allocationsApi = {
       endDate: new Date(item.end_date),
       developerId: item.developer_id,
       projectId: item.project_id,
+      createdAt: item.created_at ? new Date(item.created_at) : undefined,
     }));
   },
 
@@ -217,10 +229,11 @@ export const allocationsApi = {
       endDate: new Date(item.end_date),
       developerId: item.developer_id,
       projectId: item.project_id,
+      createdAt: item.created_at ? new Date(item.created_at) : undefined,
     }));
   },
 
-  create: async (allocation: Allocation): Promise<Allocation> => {
+  create: async (allocation: Allocation, teamId?: string): Promise<Allocation> => {
     const response = await fetch(`${API_BASE_URL}/allocations`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -232,6 +245,7 @@ export const allocationsApi = {
         start_date: allocation.startDate.toISOString().split('T')[0],
         end_date: allocation.endDate.toISOString().split('T')[0],
         notes: allocation.notes,
+        teamId,
       }),
     });
     const data = await handleResponse<any>(response);
@@ -244,7 +258,7 @@ export const allocationsApi = {
     };
   },
 
-  update: async (id: string, allocation: Partial<Allocation>): Promise<Allocation> => {
+  update: async (id: string, allocation: Partial<Allocation>, teamId?: string): Promise<Allocation> => {
     const response = await fetch(`${API_BASE_URL}/allocations/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
@@ -255,6 +269,7 @@ export const allocationsApi = {
         start_date: allocation.startDate ? allocation.startDate.toISOString().split('T')[0] : undefined,
         end_date: allocation.endDate ? allocation.endDate.toISOString().split('T')[0] : undefined,
         notes: allocation.notes,
+        teamId,
       }),
     });
     const data = await handleResponse<any>(response);

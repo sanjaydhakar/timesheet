@@ -517,6 +517,14 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
                       {allocation.notes && (
                         <p className="text-sm text-gray-500 italic mt-1">{allocation.notes}</p>
                       )}
+                      {(allocation.createdByName || allocation.createdAt) && (
+                        <div className="mt-2 pt-2 border-t border-gray-100">
+                          <p className="text-xs text-gray-400">
+                            Created by {allocation.createdByName || 'Unknown'} 
+                            {allocation.createdAt && ` on ${formatDate(allocation.createdAt)}`}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">

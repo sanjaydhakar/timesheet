@@ -681,7 +681,7 @@ const TimelineViewEnhanced: React.FC = () => {
                                   height: `${barHeight}px`,
                                   opacity: 0.95,
                                 }}
-                                title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
+                                title={`${bar.project.name} - ${bar.allocation.bandwidth}%${bar.allocation.createdByName ? ` - Created by ${bar.allocation.createdByName}` : ''}${bar.allocation.createdAt ? ` on ${formatDate(bar.allocation.createdAt)}` : ''} - Click to edit`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleEditAllocation(bar.allocation);
@@ -813,7 +813,7 @@ const TimelineViewEnhanced: React.FC = () => {
                                   height: `${barHeight}px`,
                                   opacity: 0.9,
                                 }}
-                                title={`${bar.project.name} - ${bar.allocation.bandwidth}% - Click to edit`}
+                                title={`${bar.project.name} - ${bar.allocation.bandwidth}%${bar.allocation.createdByName ? ` - Created by ${bar.allocation.createdByName}` : ''}${bar.allocation.createdAt ? ` on ${formatDate(bar.allocation.createdAt)}` : ''} - Click to edit`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleEditAllocation(bar.allocation);
@@ -1089,6 +1089,30 @@ const TimelineViewEnhanced: React.FC = () => {
                   placeholder="Add any notes..."
                 />
               </div>
+
+              {/* Allocation Tracking Information */}
+              {(editingAllocation.createdByName || editingAllocation.createdAt) && (
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Allocation Details</h4>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    {editingAllocation.createdByName && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Created by:</span>
+                        <span>{editingAllocation.createdByName}</span>
+                        {editingAllocation.createdByEmail && (
+                          <span className="text-gray-500">({editingAllocation.createdByEmail})</span>
+                        )}
+                      </div>
+                    )}
+                    {editingAllocation.createdAt && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Created on:</span>
+                        <span>{formatDate(editingAllocation.createdAt)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <button

@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRouter from './routes/auth';
+import teamsRouter from './routes/teams';
 import developersRouter from './routes/developers';
 import projectsRouter from './routes/projects';
 import allocationsRouter from './routes/allocations';
@@ -29,6 +30,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRouter);
+app.use('/api/teams', teamsRouter);
 app.use('/api/developers', developersRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/allocations', allocationsRouter);
