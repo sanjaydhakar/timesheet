@@ -12,7 +12,7 @@ interface TeamMember {
 }
 
 const TeamManagement: React.FC = () => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
