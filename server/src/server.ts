@@ -51,7 +51,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 async function startServer() {
   try {
     // Run migrations first
-    await runMigrations();
+    await runMigrations(true);
     console.log("✅ Migrations completed successfully");
   } catch (error) {
     console.warn("⚠️  Migrations had issues, but starting server anyway.");
