@@ -1,7 +1,0 @@
-name,email,skills
-John Doe,john.doe@company.com,"React,TypeScript,Node.js,GraphQL"
-Jane Smith,jane.smith@company.com,"Python,Django,PostgreSQL,Docker"
-Mike Johnson,mike.johnson@company.com,"Vue.js,JavaScript,Firebase,CSS"
-Sarah Williams,sarah.williams@company.com,"Angular,Java,Spring Boot,Kubernetes"
-Tom Brown,tom.brown@company.com,"React Native,iOS,Android,Mobile Development"
-
