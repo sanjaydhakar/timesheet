@@ -6,6 +6,7 @@ import teamsRouter from './routes/teams';
 import developersRouter from './routes/developers';
 import projectsRouter from './routes/projects';
 import allocationsRouter from './routes/allocations';
+import { runMigrations } from './database/runMigrations';
 
 dotenv.config();
 
@@ -46,11 +47,28 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
-  console.log(`❤️  Health check at http://localhost:${PORT}/health`);
+// Start server with migrations
+async function startServer() {
+  // Run migrations first
+  const migrationSuccess = await runMigrations();
+  
+  if (!migrationSuccess) {
+    console.warn('⚠️  Migrations had issues, but starting server anyway.');
+    console.warn('⚠️  You may need to run migrations manually if there are database errors.');
+  }
+  
+  // Start the server
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+    console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
+    console.log(`❤️  Health check at http://localhost:${PORT}/health`);
+  });
+}
+
+// Start the application
+startServer().catch((error) => {
+  console.error('❌ Failed to start application:', error);
+  process.exit(1);
 });
 
 export default app;
