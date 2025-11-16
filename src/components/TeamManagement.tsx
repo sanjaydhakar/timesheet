@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Team } from '../types';
 import { X, Plus, UserPlus, Users, Settings, Trash2 } from 'lucide-react';
 
+// Add API base URL from environment variable
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 interface TeamMember {
   id: string;
   name: string;
@@ -30,7 +32,7 @@ const TeamManagement: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:3001/api/teams', {
+      const response = await fetch(`${API_BASE_URL}/teams`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -55,7 +57,7 @@ const TeamManagement: React.FC = () => {
     if (!token) return;
     
     try {
-      const response = await fetch(`http://localhost:3001/api/teams/${teamId}/members`, {
+      const response = await fetch(`${API_BASE_URL}/teams/${teamId}/members`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -80,7 +82,7 @@ const TeamManagement: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:3001/api/teams', {
+      const response = await fetch(`${API_BASE_URL}/teams`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -116,7 +118,7 @@ const TeamManagement: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:3001/api/teams/join', {
+      const response = await fetch(`${API_BASE_URL}/teams/join`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -149,7 +151,7 @@ const TeamManagement: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:3001/api/teams/${teamId}/leave`, {
+      const response = await fetch(`${API_BASE_URL}/teams/${teamId}/leave`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

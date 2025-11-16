@@ -160,7 +160,7 @@ timesheet-cursor/
 
 ### Base URL
 ```
-http://localhost:3001/api
+${VITE_API_URL} or ${VITE_API_URL} or http://localhost:3001/api (default) (default)
 ```
 
 ### Endpoints
