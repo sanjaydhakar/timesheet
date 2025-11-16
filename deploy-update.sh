@@ -41,18 +41,11 @@ else
     print_info "Not a git repository, skipping pull..."
 fi
 
-# Update backend
-print_info "Updating backend..."
+# Update backend (migrations run automatically via postbuild hook)
+print_info "Updating backend (migrations will run automatically after build)..."
 cd $APP_DIR/server
 sudo -u $DEPLOY_USER npm install --production
 sudo -u $DEPLOY_USER npm run build
-
-# Run database migrations
-print_info "Running database migrations..."
-cd $APP_DIR/server
-sudo -u $DEPLOY_USER npm run db:migrate || {
-    print_warning "Migration failed or already up to date"
-}
 
 # Update frontend
 print_info "Updating frontend..."

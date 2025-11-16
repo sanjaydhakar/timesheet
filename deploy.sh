@@ -130,16 +130,11 @@ sudo -u $DEPLOY_USER npm install
 print_info "Building frontend..."
 sudo -u $DEPLOY_USER npm run build
 
-# Step 12: Build server and run database migrations
-print_info "Building server..."
+# Step 12: Build server (migrations run automatically via postbuild hook)
+print_info "Building server (migrations will run automatically)..."
 cd $APP_DIR/server
-sudo -u $DEPLOY_USER npm run build
-
-print_info "Running database migrations..."
-cd $APP_DIR/server
-# Run migrations using npm script (uses .env for database connection)
-sudo -u $DEPLOY_USER npm run db:migrate || {
-    print_warning "Migration failed, attempting manual migration..."
+sudo -u $DEPLOY_USER npm run build || {
+    print_warning "Build or migration failed, attempting manual migration..."
     # Fallback to direct psql if npm migration fails
     sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f dist/database/schema.sql 2>/dev/null || true
     sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f dist/database/add_authentication.sql 2>/dev/null || true
