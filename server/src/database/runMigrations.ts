@@ -57,7 +57,8 @@ export async function runMigrations(): Promise<boolean> {
     const migrationFiles = [
       'add_devs_needed.sql',
       'add_project_dates.sql',
-      'add_allocation_tracking.sql'
+      'add_allocation_tracking.sql',
+      'add_teams.sql'
     ];
     
     for (const file of migrationFiles) {
