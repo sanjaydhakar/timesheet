@@ -47,6 +47,13 @@ cd $APP_DIR/server
 sudo -u $DEPLOY_USER npm install --production
 sudo -u $DEPLOY_USER npm run build
 
+# Run database migrations
+print_info "Running database migrations..."
+cd $APP_DIR/server
+sudo -u $DEPLOY_USER npm run db:migrate || {
+    print_warning "Migration failed or already up to date"
+}
+
 # Update frontend
 print_info "Updating frontend..."
 cd $APP_DIR

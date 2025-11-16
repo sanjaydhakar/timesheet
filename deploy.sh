@@ -130,14 +130,21 @@ sudo -u $DEPLOY_USER npm install
 print_info "Building frontend..."
 sudo -u $DEPLOY_USER npm run build
 
-# Step 12: Run database migrations
-print_info "Running database migrations..."
+# Step 12: Build server and run database migrations
+print_info "Building server..."
 cd $APP_DIR/server
 sudo -u $DEPLOY_USER npm run build
-sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f src/database/schema.sql
-sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f src/database/add_project_dates.sql 2>/dev/null || true
-sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f src/database/add_devs_needed.sql 2>/dev/null || true
-sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f src/database/add_authentication.sql 2>/dev/null || true
+
+print_info "Running database migrations..."
+cd $APP_DIR/server
+# Run migrations using npm script (uses .env for database connection)
+sudo -u $DEPLOY_USER npm run db:migrate || {
+    print_warning "Migration failed, attempting manual migration..."
+    # Fallback to direct psql if npm migration fails
+    sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f dist/database/schema.sql 2>/dev/null || true
+    sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f dist/database/add_authentication.sql 2>/dev/null || true
+    sudo -u $DEPLOY_USER PGPASSWORD=changeme123 psql -U ${DEPLOY_USER} -d resource_management -f dist/database/add_teams.sql 2>/dev/null || true
+}
 
 # Step 13: Setup PM2 to run the backend
 print_info "Setting up PM2 for backend..."
