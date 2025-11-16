@@ -9,6 +9,8 @@
     "copy:sql": "mkdir -p dist/database && cp src/database/*.sql dist/database/ 2>/dev/null || true",
     "start": "node dist/server.js",
     "db:migrate": "node dist/database/migrate.js",
+    "db:migrate:complete": "node dist/database/runMigrations.js --complete",
+    "db:migrate:complete": "node dist/database/runMigrations.js --complete",
     "db:seed": "node dist/database/seed.js"
   },
   "dependencies": {
