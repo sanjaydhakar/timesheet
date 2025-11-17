@@ -2,13 +2,13 @@
 -- This file contains the complete schema for the Resource Management Tool
 -- including all tables, relationships, indexes, and functions
 
--- Drop tables if they exist (for clean migration)
-DROP TABLE IF EXISTS user_teams CASCADE;
-DROP TABLE IF EXISTS teams CASCADE;
-DROP TABLE IF EXISTS allocations CASCADE;
-DROP TABLE IF EXISTS projects CASCADE;
-DROP TABLE IF EXISTS developers CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
+-- -- Drop tables if they exist (for clean migration)
+-- DROP TABLE IF EXISTS user_teams CASCADE;
+-- DROP TABLE IF EXISTS teams CASCADE;
+-- DROP TABLE IF EXISTS allocations CASCADE;
+-- DROP TABLE IF EXISTS projects CASCADE;
+-- DROP TABLE IF EXISTS developers CASCADE;
+-- DROP TABLE IF EXISTS users CASCADE;
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

@@ -49,14 +49,14 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 // Start server with migrations
 async function startServer() {
-  try {
-    // Run migrations first
-    await runMigrations(true);
-    console.log("✅ Migrations completed successfully");
-  } catch (error) {
-    console.warn("⚠️  Migrations had issues, but starting server anyway.");
-    console.warn("⚠️  You may need to run migrations manually if there are database errors.");
-  }
+  // try {
+  //   // Run migrations first
+  //   await runMigrations(true);
+  //   console.log("✅ Migrations completed successfully");
+  // } catch (error) {
+  //   console.warn("⚠️  Migrations had issues, but starting server anyway.");
+  //   console.warn("⚠️  You may need to run migrations manually if there are database errors.");
+  // }
   app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
     console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);

@@ -1,9 +1,9 @@
 -- Resource Management Database Schema
 
--- Drop tables if they exist (for clean migration)
-DROP TABLE IF EXISTS allocations CASCADE;
-DROP TABLE IF EXISTS projects CASCADE;
-DROP TABLE IF EXISTS developers CASCADE;
+-- -- Drop tables if they exist (for clean migration)
+-- DROP TABLE IF EXISTS allocations CASCADE;
+-- DROP TABLE IF EXISTS projects CASCADE;
+-- DROP TABLE IF EXISTS developers CASCADE;
 
 -- Developers table
 CREATE TABLE developers (
