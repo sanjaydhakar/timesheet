@@ -24,6 +24,19 @@ function getAuthHeaders(): HeadersInit {
 // Helper function to handle API responses
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    // Handle authentication errors (401 Unauthorized, 403 Forbidden)
+    if (response.status === 401 || response.status === 403) {
+      // Clear auth data and redirect to login
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('current_team_id');
+      
+      // Reload the page to trigger login screen
+      window.location.reload();
+      
+      throw new Error('Session expired. Please login again.');
+    }
+    
     const error = await response.json().catch(() => ({ error: 'An error occurred' }));
     throw new Error(error.error || `HTTP error! status: ${response.status}`);
   }

@@ -56,6 +56,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (userData.currentTeamId) {
           localStorage.setItem('current_team_id', userData.currentTeamId);
         }
+      } else if (response.status === 401 || response.status === 403) {
+        // Token is invalid or expired - logout user
+        console.log('Token expired or invalid, logging out...');
+        logout();
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
