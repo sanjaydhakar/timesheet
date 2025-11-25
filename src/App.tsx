@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
 import Login from './components/Login';
@@ -19,7 +19,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('timeline');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout, switchTeam } = useAuth();
-  const { loading, error, refreshSelective } = useData();
+  const { loading, error, refreshSelective, refreshData } = useData();
 
   // Refresh only needed data when tab changes
   useEffect(() => {
