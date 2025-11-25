@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Developer, Project, Allocation } from '../types';
 import { developersApi, projectsApi, allocationsApi } from '../services/api';
 import { useAuth } from './AuthContext';
@@ -19,6 +19,7 @@ interface DataContextType {
   updateAllocation: (id: string, allocation: Partial<Allocation>) => Promise<void>;
   deleteAllocation: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
+  refreshSelective: (dataTypes: ('developers' | 'projects' | 'allocations')[]) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -30,6 +31,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialMount, setIsInitialMount] = useState(true);
+  const prevTeamIdRef = React.useRef<string | undefined>();
 
   // Fetch all data on mount
   const fetchData = async () => {
@@ -59,9 +62,69 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Fetch only specific data types - memoized to prevent unnecessary re-renders
+  const fetchSelective = useCallback(async (dataTypes: ('developers' | 'projects' | 'allocations')[]) => {
+    if (!user || !user.currentTeamId) {
+      return;
+    }
+
+    console.log('📡 fetchSelective called with:', dataTypes, 'user:', user.id);
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const promises: Promise<any>[] = [];
+      const types: string[] = [];
+
+      if (dataTypes.includes('developers')) {
+        console.log('  → Fetching developers');
+        promises.push(developersApi.getAll());
+        types.push('developers');
+      }
+      if (dataTypes.includes('projects')) {
+        console.log('  → Fetching projects');
+        promises.push(projectsApi.getAll());
+        types.push('projects');
+      }
+      if (dataTypes.includes('allocations')) {
+        console.log('  → Fetching allocations');
+        promises.push(allocationsApi.getAll());
+        types.push('allocations');
+      }
+
+      const results = await Promise.all(promises);
+      
+      results.forEach((data, index) => {
+        const type = types[index];
+        if (type === 'developers') setDevelopers(data);
+        if (type === 'projects') setProjects(data);
+        if (type === 'allocations') setAllocations(data);
+      });
+    } catch (err: any) {
+      console.error('Error fetching selective data:', err);
+      setError(err.message || 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Handle initial mount and team changes
   useEffect(() => {
-    fetchData();
-  }, [user?.currentTeamId]);
+    if (isInitialMount) {
+      // On initial mount, just set loading to false
+      // Let App.tsx handle the initial data fetch based on the current tab
+      setIsInitialMount(false);
+      setLoading(false);
+      prevTeamIdRef.current = user?.currentTeamId;
+    } else if (user?.currentTeamId && prevTeamIdRef.current !== user?.currentTeamId) {
+      // Only fetch when team actually changes (not just when user object updates)
+      console.log('🔄 Team changed from', prevTeamIdRef.current, 'to', user?.currentTeamId);
+      prevTeamIdRef.current = user?.currentTeamId;
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.currentTeamId, isInitialMount]); // fetchData intentionally omitted to prevent loops
 
   const addDeveloper = async (developer: Developer) => {
     try {
@@ -178,6 +241,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateAllocation,
       deleteAllocation,
       refreshData: fetchData,
+      refreshSelective: fetchSelective,
     }}>
       {children}
     </DataContext.Provider>

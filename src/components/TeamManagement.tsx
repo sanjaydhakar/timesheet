@@ -14,7 +14,7 @@ interface TeamMember {
 }
 
 const TeamManagement: React.FC = () => {
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -104,6 +104,9 @@ const TeamManagement: React.FC = () => {
       setNewTeamName('');
       setNewTeamDescription('');
       setShowCreateForm(false);
+      
+      // Refresh user to get updated teams list
+      await refreshUser();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -138,6 +141,9 @@ const TeamManagement: React.FC = () => {
       setTeams([data, ...teams]);
       setJoinTeamId('');
       setShowJoinForm(false);
+      
+      // Refresh user to get updated teams list
+      await refreshUser();
     } catch (err: any) {
       setError(err.message);
     } finally {

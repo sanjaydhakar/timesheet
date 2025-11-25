@@ -35,7 +35,7 @@ const ProjectView: React.FC = () => {
     devsNeeded: '',
   });
   const [allocationForm, setAllocationForm] = useState({
-    developerId: '',
+    developerIds: [] as string[],
     projectId: '',
     bandwidth: 100 as 50 | 100,
     startDate: formatDateInput(new Date()),
@@ -169,7 +169,7 @@ const ProjectView: React.FC = () => {
     const project = projects.find(p => p.id === projectId);
     setEditingAllocation(null);
     setAllocationForm({
-      developerId: developers[0]?.id || '',
+      developerIds: [],
       projectId: projectId,
       bandwidth: 100,
       startDate: formatDateInput(new Date()),
@@ -212,12 +212,12 @@ const ProjectView: React.FC = () => {
     closeProjectModal();
   };
 
-  const handleAllocationSubmit = (e: React.FormEvent) => {
+  const handleAllocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (editingAllocation) {
-      updateAllocation(editingAllocation.id, {
-        developerId: allocationForm.developerId,
+      await updateAllocation(editingAllocation.id, {
+        developerId: allocationForm.developerIds[0],
         projectId: allocationForm.projectId,
         bandwidth: allocationForm.bandwidth,
         startDate: new Date(allocationForm.startDate),
@@ -225,15 +225,18 @@ const ProjectView: React.FC = () => {
         notes: allocationForm.notes,
       });
     } else {
-      addAllocation({
-        id: `alloc${Date.now()}`,
-        developerId: allocationForm.developerId,
-        projectId: allocationForm.projectId,
-        bandwidth: allocationForm.bandwidth,
-        startDate: new Date(allocationForm.startDate),
-        endDate: new Date(allocationForm.endDate),
-        notes: allocationForm.notes,
+      const promises = allocationForm.developerIds.map((developerId, index) => {
+        return addAllocation({
+          id: `alloc${Date.now()}_${index}`,
+          developerId,
+          projectId: allocationForm.projectId,
+          bandwidth: allocationForm.bandwidth,
+          startDate: new Date(allocationForm.startDate),
+          endDate: new Date(allocationForm.endDate),
+          notes: allocationForm.notes,
+        });
       });
+      await Promise.all(promises);
     }
     closeAllocationModal();
   };
@@ -759,21 +762,67 @@ const ProjectView: React.FC = () => {
             <form onSubmit={handleAllocationSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Developer *
+                  {editingAllocation ? 'Developer *' : 'Developers *'}
                 </label>
-                <select
-                  required
-                  value={allocationForm.developerId}
-                  onChange={(e) => setAllocationForm({ ...allocationForm, developerId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Select a developer</option>
-                  {developers.map(dev => (
-                    <option key={dev.id} value={dev.id}>
-                      {dev.name} - {dev.skills.join(', ')}
-                    </option>
-                  ))}
-                </select>
+                {editingAllocation ? (
+                  <select
+                    required
+                    value={allocationForm.developerIds[0] || ''}
+                    onChange={(e) => setAllocationForm({ ...allocationForm, developerIds: [e.target.value] })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Select a developer</option>
+                    {developers.map(dev => (
+                      <option key={dev.id} value={dev.id}>
+                        {dev.name} - {dev.skills.join(', ')}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-2">
+                    {developers.length === 0 ? (
+                      <p className="text-sm text-gray-500 p-2">No developers available.</p>
+                    ) : (
+                      developers.map(dev => {
+                        const isSelected = allocationForm.developerIds.includes(dev.id);
+                        return (
+                          <label
+                            key={dev.id}
+                            className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors ${
+                              isSelected ? 'bg-primary-50 border border-primary-200' : ''
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAllocationForm({
+                                    ...allocationForm,
+                                    developerIds: [...allocationForm.developerIds, dev.id]
+                                  });
+                                } else {
+                                  setAllocationForm({
+                                    ...allocationForm,
+                                    developerIds: allocationForm.developerIds.filter(id => id !== dev.id)
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                            />
+                            <span className="text-sm text-gray-700 flex-1">{dev.name}</span>
+                            <span className="text-xs text-gray-500">{dev.skills.join(', ')}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+                {!editingAllocation && allocationForm.developerIds.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {allocationForm.developerIds.length} developer{allocationForm.developerIds.length > 1 ? 's' : ''} selected
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -870,9 +919,10 @@ const ProjectView: React.FC = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-primary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all"
+                  disabled={!editingAllocation && allocationForm.developerIds.length === 0}
+                  className="flex-1 bg-gradient-primary text-white py-2 px-4 rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingAllocation ? 'Update Allocation' : 'Add Allocation'}
+                  {editingAllocation ? 'Update Allocation' : `Add Allocation ${allocationForm.developerIds.length > 0 ? `(${allocationForm.developerIds.length})` : ''}`}
                 </button>
                 <button
                   type="button"

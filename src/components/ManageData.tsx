@@ -67,7 +67,7 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
 
   // Allocation form state
   const [allocationForm, setAllocationForm] = useState({
-    developerId: '',
+    developerIds: [] as string[], // Changed to support multiple developers
     projectId: '',
     bandwidth: 100 as 50 | 100,
     startDate: formatDateInput(new Date()),
@@ -125,7 +125,7 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
     if (allocation) {
       setEditingId(allocation.id);
       setAllocationForm({
-        developerId: allocation.developerId,
+        developerIds: [allocation.developerId], // Single developer for editing
         projectId: allocation.projectId,
         bandwidth: allocation.bandwidth as 50 | 100,
         startDate: formatDateInput(allocation.startDate),
@@ -138,7 +138,7 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
       const firstProject = projects.find(p => p.id === firstProjectId);
       
       setAllocationForm({
-        developerId: developers[0]?.id || '',
+        developerIds: [], // Empty for new allocation
         projectId: firstProjectId,
         bandwidth: 100,
         startDate: formatDateInput(new Date()),
@@ -187,7 +187,7 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
           const firstProjectId = projects[0]?.id || '';
           const firstProject = projects.find(p => p.id === firstProjectId);
           setAllocationForm({
-            developerId: developer.id,
+            developerIds: [developer.id],
             projectId: firstProjectId,
             bandwidth: 100,
             startDate: formatDateInput(new Date()),
@@ -197,9 +197,8 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
             notes: '',
           });
         } else if (project) {
-          const firstDeveloperId = developers[0]?.id || '';
           setAllocationForm({
-            developerId: firstDeveloperId,
+            developerIds: [],
             projectId: project.id,
             bandwidth: 100,
             startDate: formatDateInput(new Date()),
@@ -230,9 +229,9 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
         email: developerForm.email,
         skills,
       });
-      // If returning to allocation modal, select the newly created developer
+      // If returning to allocation modal, add the newly created developer
       if (returnToAllocationModal) {
-        setAllocationForm({ ...allocationForm, developerId: newId });
+        setAllocationForm({ ...allocationForm, developerIds: [...allocationForm.developerIds, newId] });
       }
     }
     closeModal();
@@ -273,25 +272,34 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
     closeModal();
   };
 
-  const handleAllocationSubmit = (e: React.FormEvent) => {
+  const handleAllocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const allocationData = {
-      developerId: allocationForm.developerId,
-      projectId: allocationForm.projectId,
-      bandwidth: allocationForm.bandwidth,
-      startDate: new Date(allocationForm.startDate),
-      endDate: new Date(allocationForm.endDate),
-      notes: allocationForm.notes,
-    };
-    
     if (editingId) {
-      updateAllocation(editingId, allocationData);
+      // Editing existing allocation - single developer only
+      const allocationData = {
+        developerId: allocationForm.developerIds[0],
+        projectId: allocationForm.projectId,
+        bandwidth: allocationForm.bandwidth,
+        startDate: new Date(allocationForm.startDate),
+        endDate: new Date(allocationForm.endDate),
+        notes: allocationForm.notes,
+      };
+      await updateAllocation(editingId, allocationData);
     } else {
-      addAllocation({
-        id: `alloc${Date.now()}`,
-        ...allocationData,
+      // Creating new allocations - can be multiple developers
+      const promises = allocationForm.developerIds.map((developerId, index) => {
+        return addAllocation({
+          id: `alloc${Date.now()}_${index}`,
+          developerId,
+          projectId: allocationForm.projectId,
+          bandwidth: allocationForm.bandwidth,
+          startDate: new Date(allocationForm.startDate),
+          endDate: new Date(allocationForm.endDate),
+          notes: allocationForm.notes,
+        });
       });
+      await Promise.all(promises);
     }
     closeModal();
   };
@@ -761,26 +769,78 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
             <form onSubmit={handleAllocationSubmit} className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-gray-700">Developer</label>
-                  <button
-                    type="button"
-                    onClick={() => openDeveloperModal(undefined, true)}
-                    className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add New
-                  </button>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {editingId ? 'Developer' : 'Developers'}
+                  </label>
+                  {!editingId && (
+                    <button
+                      type="button"
+                      onClick={() => openDeveloperModal(undefined, true)}
+                      className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add New
+                    </button>
+                  )}
                 </div>
-                <select
-                  required
-                  value={allocationForm.developerId}
-                  onChange={(e) => setAllocationForm({ ...allocationForm, developerId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  {developers.map(dev => (
-                    <option key={dev.id} value={dev.id}>{dev.name}</option>
-                  ))}
-                </select>
+                {editingId ? (
+                  // Single select for editing
+                  <select
+                    required
+                    value={allocationForm.developerIds[0] || ''}
+                    onChange={(e) => setAllocationForm({ ...allocationForm, developerIds: [e.target.value] })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    {developers.map(dev => (
+                      <option key={dev.id} value={dev.id}>{dev.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  // Multi-select checkboxes for creating new allocations
+                  <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-2">
+                    {developers.length === 0 ? (
+                      <p className="text-sm text-gray-500 p-2">No developers available. Add a developer first.</p>
+                    ) : (
+                      developers.map(dev => {
+                        const isSelected = allocationForm.developerIds.includes(dev.id);
+                        return (
+                          <label
+                            key={dev.id}
+                            className={`flex items-center gap-2 p-2 rounded cursor-pointer hover:bg-gray-50 transition-colors ${
+                              isSelected ? 'bg-primary-50 border border-primary-200' : ''
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAllocationForm({
+                                    ...allocationForm,
+                                    developerIds: [...allocationForm.developerIds, dev.id]
+                                  });
+                                } else {
+                                  setAllocationForm({
+                                    ...allocationForm,
+                                    developerIds: allocationForm.developerIds.filter(id => id !== dev.id)
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
+                            />
+                            <span className="text-sm text-gray-700 flex-1">{dev.name}</span>
+                            <span className="text-xs text-gray-500">{dev.email}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+                {!editingId && allocationForm.developerIds.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {allocationForm.developerIds.length} developer{allocationForm.developerIds.length > 1 ? 's' : ''} selected
+                  </p>
+                )}
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
@@ -884,9 +944,10 @@ const ManageData: React.FC<ManageDataProps> = ({ initialContext, onContextCleare
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  disabled={!editingId && allocationForm.developerIds.length === 0}
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingId ? 'Update' : 'Add'}
+                  {editingId ? 'Update' : `Add ${allocationForm.developerIds.length > 0 ? `(${allocationForm.developerIds.length})` : ''}`}
                 </button>
               </div>
             </form>

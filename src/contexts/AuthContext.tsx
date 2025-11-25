@@ -19,6 +19,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   switchTeam: (teamId: string) => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
@@ -177,6 +178,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const refreshUser = async () => {
+    if (token) {
+      const currentTeamId = user?.currentTeamId || localStorage.getItem('current_team_id') || undefined;
+      await fetchUserData(token, currentTeamId);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -186,6 +194,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         register,
         logout,
         switchTeam,
+        refreshUser,
         isLoading,
         error,
       }}

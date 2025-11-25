@@ -49,6 +49,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 // Start server with migrations
 async function startServer() {
+  // Migrations are commented out because database is already initialized
+  // Only uncomment if you need to reset/initialize the database
   // try {
   //   // Run migrations first
   //   await runMigrations(true);

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useData } from '../contexts/DataContext';
 import { formatDate, getTodayStart, formatDateInput } from '../utils/dateUtils';
 import { Calendar, ChevronLeft, ChevronRight, User, Briefcase, X, Plus } from 'lucide-react';
-import { addDays, differenceInDays, eachMonthOfInterval, format } from 'date-fns';
+import { addDays, differenceInDays, eachMonthOfInterval, eachWeekOfInterval, startOfWeek, endOfWeek, format } from 'date-fns';
 import { Developer, Project } from '../types';
 
 interface TimelineBar {
@@ -22,7 +22,8 @@ interface DragSelection {
 const TimelineViewEnhanced: React.FC = () => {
   const { developers, projects, allocations, addAllocation, updateAllocation, deleteAllocation, addDeveloper, addProject } = useData();
   const [viewMode, setViewMode] = useState<'resource' | 'project'>('resource');
-  const [timeRange, setTimeRange] = useState<'3months' | '6months' | '12months'>('6months');
+  const [timeRange, setTimeRange] = useState<'1month' | '3months' | '6months' | '12months'>('6months');
+  const [granularity, setGranularity] = useState<'week' | 'month'>('month');
   const [startDate, setStartDate] = useState(() => {
     const today = getTodayStart();
     return addDays(today, -30);
@@ -122,6 +123,7 @@ const TimelineViewEnhanced: React.FC = () => {
 
   const getDaysToShow = () => {
     switch (timeRange) {
+      case '1month': return 30;
       case '3months': return 90;
       case '6months': return 180;
       case '12months': return 365;
@@ -136,6 +138,12 @@ const TimelineViewEnhanced: React.FC = () => {
   const months = useMemo(() => {
     return eachMonthOfInterval({ start: startDate, end: endDate });
   }, [startDate, endDate]);
+
+  const weeks = useMemo(() => {
+    return eachWeekOfInterval({ start: startDate, end: endDate }, { weekStartsOn: 1 });
+  }, [startDate, endDate]);
+
+  const timeUnits = granularity === 'month' ? months : weeks;
 
   const calculatePosition = (date: Date): number => {
     const daysDiff = differenceInDays(date, startDate);
@@ -470,8 +478,42 @@ const TimelineViewEnhanced: React.FC = () => {
               </button>
             </div>
 
+            {/* Granularity Toggle */}
+            <div className="flex gap-1 border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+              <button
+                onClick={() => setGranularity('week')}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  granularity === 'week'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => setGranularity('month')}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  granularity === 'month'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Month
+              </button>
+            </div>
+
             {/* Time Range */}
             <div className="flex gap-1 border border-gray-300 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setTimeRange('1month')}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  timeRange === '1month'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                1M
+              </button>
               <button
                 onClick={() => setTimeRange('3months')}
                 className={`px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -550,33 +592,65 @@ const TimelineViewEnhanced: React.FC = () => {
                 </span>
               </div>
               <div className="flex-1 relative h-14" ref={timelineRef}>
-                {months.map((month, index) => {
-                  const monthStart = month < startDate ? startDate : month;
-                  const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0) > endDate 
-                    ? endDate 
-                    : new Date(month.getFullYear(), month.getMonth() + 1, 0);
-                  const monthStartPos = calculatePosition(monthStart);
-                  const monthEndPos = calculatePosition(monthEnd);
-                  const monthWidth = monthEndPos - monthStartPos;
+                {granularity === 'month' ? (
+                  // Month view
+                  months.map((month, index) => {
+                    const monthStart = month < startDate ? startDate : month;
+                    const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0) > endDate 
+                      ? endDate 
+                      : new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                    const monthStartPos = calculatePosition(monthStart);
+                    const monthEndPos = calculatePosition(monthEnd);
+                    const monthWidth = monthEndPos - monthStartPos;
 
-                  return (
-                    <div
-                      key={index}
-                      className="absolute top-0 bottom-0 border-r border-gray-200 flex flex-col items-center justify-center bg-gradient-to-b from-transparent to-gray-50/50"
-                      style={{
-                        left: `${monthStartPos}%`,
-                        width: `${monthWidth}%`,
-                      }}
-                    >
-                      <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">
-                        {format(month, 'MMM')}
-                      </span>
-                      <span className="text-[10px] text-gray-500">
-                        {format(month, 'yyyy')}
-                      </span>
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={index}
+                        className="absolute top-0 bottom-0 border-r border-gray-200 flex flex-col items-center justify-center bg-gradient-to-b from-transparent to-gray-50/50"
+                        style={{
+                          left: `${monthStartPos}%`,
+                          width: `${monthWidth}%`,
+                        }}
+                      >
+                        <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">
+                          {format(month, 'MMM')}
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          {format(month, 'yyyy')}
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  // Week view
+                  weeks.map((week, index) => {
+                    const weekStart = week < startDate ? startDate : week;
+                    const weekEnd = endOfWeek(week, { weekStartsOn: 1 }) > endDate 
+                      ? endDate 
+                      : endOfWeek(week, { weekStartsOn: 1 });
+                    const weekStartPos = calculatePosition(weekStart);
+                    const weekEndPos = calculatePosition(weekEnd);
+                    const weekWidth = weekEndPos - weekStartPos;
+
+                    return (
+                      <div
+                        key={index}
+                        className="absolute top-0 bottom-0 border-r border-gray-200 flex flex-col items-center justify-center bg-gradient-to-b from-transparent to-gray-50/50"
+                        style={{
+                          left: `${weekStartPos}%`,
+                          width: `${weekWidth}%`,
+                        }}
+                      >
+                        <span className="text-[9px] font-bold text-gray-800">
+                          W{format(week, 'w')}
+                        </span>
+                        <span className="text-[9px] text-gray-500">
+                          {format(week, 'MMM d')}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -628,10 +702,10 @@ const TimelineViewEnhanced: React.FC = () => {
                         className="flex-1 relative h-16 border-r border-gray-100 cursor-crosshair bg-gradient-to-b from-transparent to-gray-50/30"
                         onMouseDown={(e) => handleMouseDown(e, developer.id, 'developer')}
                       >
-                        {/* Week dividers - subtle grid */}
-                        {months.map((month, index) => {
-                          const monthStart = month < startDate ? startDate : month;
-                          const pos = calculatePosition(monthStart);
+                        {/* Time unit dividers - subtle grid */}
+                        {timeUnits.map((unit, index) => {
+                          const unitStart = unit < startDate ? startDate : unit;
+                          const pos = calculatePosition(unitStart);
                           return (
                             <div
                               key={index}
@@ -759,10 +833,10 @@ const TimelineViewEnhanced: React.FC = () => {
                         }}
                         onMouseDown={(e) => handleMouseDown(e, project.id, 'project')}
                       >
-                        {/* Month dividers */}
-                        {months.map((month, index) => {
-                          const monthStart = month < startDate ? startDate : month;
-                          const pos = calculatePosition(monthStart);
+                        {/* Time unit dividers */}
+                        {timeUnits.map((unit, index) => {
+                          const unitStart = unit < startDate ? startDate : unit;
+                          const pos = calculatePosition(unitStart);
                           return (
                             <div
                               key={index}

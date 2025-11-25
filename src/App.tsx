@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
 import Login from './components/Login';
@@ -19,7 +19,29 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<ViewType>('timeline');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout, switchTeam } = useAuth();
-  const { loading, error, refreshData } = useData();
+  const { loading, error, refreshSelective } = useData();
+
+  // Refresh only needed data when tab changes
+  useEffect(() => {
+    // Skip if user is not loaded yet
+    if (!user?.id) return;
+
+    console.log('🔄 Fetching data for view:', currentView, 'user:', user?.id);
+
+    const dataNeededByView: Record<ViewType, ('developers' | 'projects' | 'allocations')[]> = {
+      timeline: ['developers', 'projects', 'allocations'], // Timeline needs all data
+      resources: ['developers', 'allocations'], // Resources view needs developers and their allocations
+      projects: ['projects', 'allocations'], // Projects view needs projects and their allocations
+      availability: ['developers', 'allocations'], // Availability finder needs developers and allocations
+      teams: [], // Teams view doesn't need resource data
+    };
+
+    const dataToFetch = dataNeededByView[currentView];
+    if (dataToFetch.length > 0) {
+      refreshSelective(dataToFetch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentView, user?.id]); // Only depend on user.id, not the entire user object
 
   const navigationItems = [
     { id: 'timeline' as ViewType, label: 'Timeline', icon: Calendar, description: 'Visual planning' },
