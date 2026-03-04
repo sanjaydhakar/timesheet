@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../contexts/DataContext';
 import { formatDate, getTodayStart } from '../utils/dateUtils';
-import { Calendar, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, User, Filter } from 'lucide-react';
 import { addDays, differenceInDays, endOfMonth, eachMonthOfInterval, format } from 'date-fns';
 
 interface TimelineBar {
@@ -14,10 +14,17 @@ interface TimelineBar {
 const TimelineView: React.FC = () => {
   const { developers, projects, allocations } = useData();
   const [timeRange, setTimeRange] = useState<'3months' | '6months' | '12months'>('6months');
+  const [skillFilter, setSkillFilter] = useState('');
   const [startDate, setStartDate] = useState(() => {
     const today = getTodayStart();
     return addDays(today, -30); // Start 30 days before today
   });
+
+  const allSkills = useMemo(() => {
+    const skills = new Set<string>();
+    developers.forEach(dev => dev.skills.forEach(skill => skills.add(skill)));
+    return Array.from(skills).sort();
+  }, [developers]);
 
   const projectColors: Record<string, string> = useMemo(() => {
     const colors = [
@@ -80,6 +87,16 @@ const TimelineView: React.FC = () => {
       return a.name.localeCompare(b.name);
     });
   }, [developers, allocations]);
+
+  // Filter developers by selected skill (exact or partial match)
+  const filteredDevelopers = useMemo(() => {
+    if (!skillFilter) return sortedDevelopers;
+    return sortedDevelopers.filter(dev =>
+      dev.skills.some(skill =>
+        skill.toLowerCase().includes(skillFilter.toLowerCase())
+      )
+    );
+  }, [sortedDevelopers, skillFilter]);
 
   const getDaysToShow = () => {
     switch (timeRange) {
@@ -158,7 +175,21 @@ const TimelineView: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">Timeline View</h2>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" aria-hidden />
+              <select
+                value={skillFilter}
+                onChange={(e) => setSkillFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                aria-label="Filter by skill"
+              >
+                <option value="">All Skills</option>
+                {allSkills.map(skill => (
+                  <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex gap-1 border border-gray-300 rounded-lg overflow-hidden">
               <button
                 onClick={() => setTimeRange('3months')}
@@ -217,8 +248,16 @@ const TimelineView: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-4 text-sm text-gray-600">
-          Showing: {formatDate(startDate)} - {formatDate(endDate)}
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+          <span>Showing: {formatDate(startDate)} - {formatDate(endDate)}</span>
+          {skillFilter && (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="font-medium text-primary-600">
+                {filteredDevelopers.length} of {developers.length} developers
+              </span>
+              <span>(skill: {skillFilter})</span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -271,7 +310,7 @@ const TimelineView: React.FC = () => {
             </div>
 
             {/* Developer rows */}
-            {sortedDevelopers.map((developer, devIndex) => {
+            {filteredDevelopers.map((developer, devIndex) => {
               const timelineBars = getDeveloperTimeline(developer.id);
               const totalBandwidth = timelineBars.reduce((sum, bar) => {
                 // Only count if bar overlaps with today
@@ -372,8 +411,12 @@ const TimelineView: React.FC = () => {
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow-md p-4">
-          <div className="text-sm text-gray-600">Total Developers</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{developers.length}</div>
+          <div className="text-sm text-gray-600">
+            {skillFilter ? 'Filtered Developers' : 'Total Developers'}
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mt-1">
+            {skillFilter ? `${filteredDevelopers.length} of ${developers.length}` : developers.length}
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="text-sm text-gray-600">Active Projects</div>
