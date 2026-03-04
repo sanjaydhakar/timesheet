@@ -235,6 +235,60 @@ router.get(
   }
 );
 
+// Remove a member from the team (admin only)
+router.delete(
+  '/:teamId/members/:userId',
+  authenticateToken,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { teamId, userId } = req.params;
+
+      // Requester must be admin of this team
+      const adminCheck = await pool.query(
+        'SELECT role FROM user_teams WHERE user_id = $1 AND team_id = $2 AND role = $3',
+        [req.userId, teamId, 'admin']
+      );
+
+      if (adminCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      // Target must be a member of this team
+      const targetMember = await pool.query(
+        'SELECT role FROM user_teams WHERE user_id = $1 AND team_id = $2',
+        [userId, teamId]
+      );
+
+      if (targetMember.rows.length === 0) {
+        return res.status(404).json({ error: 'User is not a member of this team' });
+      }
+
+      // Cannot remove the last admin
+      if (targetMember.rows[0].role === 'admin') {
+        const adminCount = await pool.query(
+          'SELECT COUNT(*) FROM user_teams WHERE team_id = $1 AND role = $2',
+          [teamId, 'admin']
+        );
+        if (parseInt(adminCount.rows[0].count, 10) <= 1) {
+          return res.status(400).json({
+            error: 'Cannot remove the only admin. Transfer admin role or delete the team.',
+          });
+        }
+      }
+
+      await pool.query(
+        'DELETE FROM user_teams WHERE user_id = $1 AND team_id = $2',
+        [userId, teamId]
+      );
+
+      res.json({ message: 'Member removed from team' });
+    } catch (error) {
+      console.error('Error removing team member:', error);
+      res.status(500).json({ error: 'Failed to remove team member' });
+    }
+  }
+);
+
 // Update team information (admin only)
 router.put(
   '/:teamId',

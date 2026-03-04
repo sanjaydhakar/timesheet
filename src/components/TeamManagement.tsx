@@ -14,7 +14,7 @@ interface TeamMember {
 }
 
 const TeamManagement: React.FC = () => {
-  const { token, refreshUser } = useAuth();
+  const { token, refreshUser, user } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -25,6 +25,7 @@ const TeamManagement: React.FC = () => {
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamDescription, setNewTeamDescription] = useState('');
   const [joinTeamId, setJoinTeamId] = useState('');
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
 
   // Fetch user's teams
   const fetchTeams = async () => {
@@ -148,6 +149,34 @@ const TeamManagement: React.FC = () => {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Remove a member from the team (admin only)
+  const removeMember = async (teamId: string, memberUserId: string) => {
+    if (!token || !selectedTeam || selectedTeam.role !== 'admin') return;
+
+    try {
+      setRemovingUserId(memberUserId);
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/teams/${teamId}/members/${memberUserId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove member');
+      }
+
+      await fetchTeamMembers(teamId);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setRemovingUserId(null);
     }
   };
 
@@ -359,31 +388,53 @@ const TeamManagement: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {teamMembers.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium text-white">{member.name}</p>
-                            <p className="text-sm text-gray-300">{member.email}</p>
-                            <div className="flex items-center mt-1">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                member.role === 'admin' 
-                                  ? 'bg-purple-500/20 text-purple-300' 
-                                  : 'bg-gray-500/20 text-gray-300'
-                              }`}>
-                                {member.role === 'admin' ? 'Admin' : 'Member'}
-                              </span>
-                              <span className="text-xs text-gray-400 ml-2">
-                                Joined {new Date(member.joinedAt).toLocaleDateString()}
-                              </span>
+                    {teamMembers.map((member) => {
+                      const isCurrentUser = member.id === user?.id;
+                      const adminCount = teamMembers.filter(m => m.role === 'admin').length;
+                      const isOnlyAdmin = member.role === 'admin' && adminCount <= 1;
+                      const canRemove = selectedTeam?.role === 'admin' && !isCurrentUser && !isOnlyAdmin;
+
+                      return (
+                        <div key={member.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-medium text-white">{member.name}</p>
+                              <p className="text-sm text-gray-300">{member.email}</p>
+                              <div className="flex items-center mt-1">
+                                <span className={`px-2 py-1 rounded-full text-xs ${
+                                  member.role === 'admin'
+                                    ? 'bg-purple-500/20 text-purple-300'
+                                    : 'bg-gray-500/20 text-gray-300'
+                                }`}>
+                                  {member.role === 'admin' ? 'Admin' : 'Member'}
+                                </span>
+                                <span className="text-xs text-gray-400 ml-2">
+                                  Joined {new Date(member.joinedAt).toLocaleDateString()}
+                                </span>
+                              </div>
                             </div>
                           </div>
+                          {canRemove && (
+                            <button
+                              type="button"
+                              onClick={() => selectedTeam && removeMember(selectedTeam.id, member.id)}
+                              disabled={removingUserId === member.id}
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                              title="Remove from team"
+                            >
+                              {removingUserId === member.id ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-400 border-t-transparent" />
+                              ) : (
+                                <Trash2 className="w-5 h-5" />
+                              )}
+                            </button>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
