@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useData } from '../contexts/DataContext';
 import { formatDate, getTodayStart, formatDateInput } from '../utils/dateUtils';
-import { Calendar, ChevronLeft, ChevronRight, User, Briefcase, X, Plus } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, User, Briefcase, X, Plus, Filter } from 'lucide-react';
 import { addDays, differenceInDays, eachMonthOfInterval, eachWeekOfInterval, endOfWeek, format } from 'date-fns';
 import { Developer, Project } from '../types';
 
@@ -22,8 +22,9 @@ interface DragSelection {
 const TimelineViewEnhanced: React.FC = () => {
   const { developers, projects, allocations, addAllocation, updateAllocation, deleteAllocation, addDeveloper, addProject } = useData();
   const [viewMode, setViewMode] = useState<'resource' | 'project'>('resource');
-  const [timeRange, setTimeRange] = useState<'1month' | '3months' | '6months' | '12months'>('6months');
-  const [granularity, setGranularity] = useState<'week' | 'month'>('month');
+  const [timeRange, setTimeRange] = useState<'1month' | '3months' | '6months' | '12months'>('3months');
+  const [granularity, setGranularity] = useState<'week' | 'month'>('week');
+  const [skillFilter, setSkillFilter] = useState('');
   const [startDate, setStartDate] = useState(() => {
     const today = getTodayStart();
     return addDays(today, -30);
@@ -120,6 +121,30 @@ const TimelineViewEnhanced: React.FC = () => {
       return a.name.localeCompare(b.name);
     });
   }, [projects]);
+
+  const allSkills = useMemo(() => {
+    const skills = new Set<string>();
+    developers.forEach(dev => dev.skills.forEach(skill => skills.add(skill)));
+    return Array.from(skills).sort();
+  }, [developers]);
+
+  const filteredDevelopers = useMemo(() => {
+    if (!skillFilter) return sortedDevelopers;
+    return sortedDevelopers.filter(dev =>
+      dev.skills.some(skill =>
+        skill.toLowerCase().includes(skillFilter.toLowerCase())
+      )
+    );
+  }, [sortedDevelopers, skillFilter]);
+
+  const filteredProjects = useMemo(() => {
+    if (!skillFilter) return sortedProjects;
+    return sortedProjects.filter(project =>
+      project.requiredSkills.some(skill =>
+        skill.toLowerCase().includes(skillFilter.toLowerCase())
+      )
+    );
+  }, [sortedProjects, skillFilter]);
 
   const getDaysToShow = () => {
     switch (timeRange) {
@@ -452,6 +477,22 @@ const TimelineViewEnhanced: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            {/* Skill Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" aria-hidden />
+              <select
+                value={skillFilter}
+                onChange={(e) => setSkillFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                aria-label="Filter by skill"
+              >
+                <option value="">All Skills</option>
+                {allSkills.map(skill => (
+                  <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+            </div>
+
             {/* View Mode Toggle */}
             <div className="flex gap-1 border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
               <button
@@ -658,7 +699,7 @@ const TimelineViewEnhanced: React.FC = () => {
             <div onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
               {viewMode === 'resource' ? (
                 // Resource View - Developers as rows
-                sortedDevelopers.map((developer, devIndex) => {
+                filteredDevelopers.map((developer, devIndex) => {
                   const timelineBars = getResourceTimeline(developer.id);
                   const totalBandwidth = timelineBars.reduce((sum, bar) => {
                     if (bar.allocation.startDate <= today && bar.allocation.endDate >= today) {
@@ -775,7 +816,7 @@ const TimelineViewEnhanced: React.FC = () => {
                 })
               ) : (
                 // Project View - Projects as rows
-                sortedProjects.map((project, projIndex) => {
+                filteredProjects.map((project, projIndex) => {
                   const timelineBars = getProjectTimeline(project.id);
                   const activeDevelopers = new Set(
                     allocations

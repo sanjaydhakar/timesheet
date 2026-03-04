@@ -118,8 +118,7 @@ timesheet-cursor/
 │   ├── components/               # React components
 │   │   ├── ResourceView.tsx      # Developer-centric view
 │   │   ├── ProjectView.tsx       # Project-centric view
-│   │   ├── TimelineViewEnhanced.tsx # Enhanced Gantt chart with drag-to-add & pivot views
-│   │   ├── TimelineView.tsx      # Legacy timeline view
+│   │   ├── TimelineViewEnhanced.tsx # Gantt chart with drag-to-add, pivot views & skill filter
 │   │   ├── AvailabilityFinder.tsx # Resource search
 │   │   ├── ManageData.tsx        # CRUD operations
 │   │   ├── BulkAddDevelopers.tsx # Bulk import component

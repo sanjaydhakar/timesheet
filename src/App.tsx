@@ -6,7 +6,7 @@ import Register from './components/Register';
 import ResourceView from './components/ResourceView';
 import ProjectView from './components/ProjectView';
 import AvailabilityFinder from './components/AvailabilityFinder';
-import TimelineView from './components/TimelineViewEnhanced';
+import TimelineViewEnhanced from './components/TimelineViewEnhanced';
 import TeamManagement from './components/TeamManagement';
 import TeamSelector from './components/TeamSelector';
 import LoadingState from './components/LoadingState';
@@ -230,7 +230,7 @@ function AppContent() {
           <div className="animate-slide-in">
             {currentView === 'resources' && <ResourceView />}
             {currentView === 'projects' && <ProjectView />}
-            {currentView === 'timeline' && <TimelineView />}
+            {currentView === 'timeline' && <TimelineViewEnhanced />}
             {currentView === 'availability' && <AvailabilityFinder />}
             {currentView === 'teams' && <TeamManagement />}
           </div>
